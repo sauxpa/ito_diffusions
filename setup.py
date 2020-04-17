@@ -11,7 +11,7 @@ setup(
     description="Library for stochastic process simulation",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/sauxpa/stochastic",
+    url="https://github.com/sauxpa/ito_diffusions",
     install_requires=['numpy', 'scipy', 'pandas', 'mpmath'],
     python_requires='>=3.6',
 )
