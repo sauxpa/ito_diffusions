@@ -8,5 +8,7 @@ Libraries for stochastic processes simulation and visualization including:
 **To install** : pip install ito-diffusions
 https://pypi.org/project/ito-diffusions/
 
+For numerous examples : https://github.com/sauxpa/stochastic
+
 <img src="./brownian_sheaf.png"
      style="float: left; margin-right: 10px;" />
