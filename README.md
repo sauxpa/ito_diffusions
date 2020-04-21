@@ -12,3 +12,10 @@ For numerous examples : https://github.com/sauxpa/stochastic
 
 <img src="./brownian_sheaf.png"
      style="float: left; margin-right: 10px;" />
+
+
+<img src="./saw_square.png"
+     style="float: left; margin-right: 10px;" />
+
+<img src="./sle_peaks.png"
+     style="float: left; margin-right: 10px;" />
