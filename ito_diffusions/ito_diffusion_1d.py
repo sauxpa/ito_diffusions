@@ -6,6 +6,7 @@ from functools import lru_cache
 from collections import defaultdict
 from scipy.stats import uniform
 from typing import Callable, Union
+import logging
 from .ito_diffusion import Ito_diffusion
 
 
@@ -163,6 +164,66 @@ class GBM(Ito_diffusion_1d):
 
     def drift(self, t, x) -> float:
         return self.drift_double * x
+
+    def vol(self, t, x) -> float:
+        return self.vol_double * x
+
+
+class Bessel(Ito_diffusion_1d):
+    """Instantiate Ito_diffusion to simulate a Bessel process
+    dX_t = (d-1)/2*dt + vol*dW_t
+    where d and vol are real numbers.
+    For vol=1 and d an integer, this corresponds to the law
+    of ||W_t|| where W is a d-dimensional Brownian motion.
+    """
+    def __init__(self,
+                 x0: float = 1.0,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 d: float = 0.0,
+                 vol: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 noise_params: defaultdict = defaultdict(int),
+                 jump_params: defaultdict = defaultdict(int),
+                 ) -> None:
+        super().__init__(x0,
+                         T,
+                         scheme_steps,
+                         barrier=barrier,
+                         barrier_condition=barrier_condition,
+                         noise_params=noise_params,
+                         jump_params=jump_params,
+                         )
+        self.check_d(d)
+        self._d = d
+        self._vol_double = np.float(vol)
+
+    def check_d(self, d):
+        if d == 1:
+            msg = 'Bessel with d=1 is equivalent to a Brownian motion.\
+Using the BM class is more stable in this case.'
+            logging.warning(msg)
+
+    @property
+    def d(self) -> float:
+        return self._d
+
+    @d.setter
+    def d(self, new_d) -> None:
+        self.check_d(new_d)
+        self._d = new_d
+
+    @property
+    def vol_double(self) -> float:
+        return self._vol_double
+
+    @vol_double.setter
+    def vol_double(self, new_vol) -> None:
+        self._vol_double = new_vol
+
+    def drift(self, t, x) -> float:
+        return 0.5 * (self.d - 1) / x
 
     def vol(self, t, x) -> float:
         return self.vol_double * x

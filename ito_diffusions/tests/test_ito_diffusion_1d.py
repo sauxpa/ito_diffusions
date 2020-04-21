@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import arcsine
-from ito_diffusions import BM, GBM, BMPeriodic, SLN,\
+from ito_diffusions import BM, GBM, Bessel, BMPeriodic, SLN,\
     Vasicek, CIR, BlackKarasinski, pseudo_GBM, Alpha_pinned_BM, F_pinned_BM,\
     FBM, Levy, Lognormal_multifractal
 
@@ -18,6 +18,14 @@ def test_GBM(seed: int = 0):
     X = GBM()  # Test with default arguments
     df = X.simulate()
     msg = 'Generated GBM path is not stochastic.'
+    assert df.std()['spot'] > 0.0, msg
+
+
+def test_Bessel(seed: int = 0):
+    np.random.seed(seed)
+    X = Bessel()  # Test with default arguments
+    df = X.simulate()
+    msg = 'Generated Bessel path is not stochastic.'
     assert df.std()['spot'] > 0.0, msg
 
 
