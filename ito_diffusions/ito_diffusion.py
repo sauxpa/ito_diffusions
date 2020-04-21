@@ -20,6 +20,7 @@ class Ito_diffusion(abc.ABC):
                  barrier_condition: None = None,
                  noise_params: defaultdict = defaultdict(float),
                  jump_params: defaultdict = defaultdict(float),
+                 verbose: bool = False,
                  ) -> None:
         self._x0 = x0
         self._T = T
@@ -46,6 +47,9 @@ class Ito_diffusion(abc.ABC):
                )
         else:
             self._noise = None
+
+        # For tqdm
+        self._verbose = verbose
 
     @property
     def x0(self) -> float:
@@ -153,6 +157,14 @@ class Ito_diffusion(abc.ABC):
         self._jump_params = new_jump_params
 
     @property
+    def verbose(self) -> bool:
+        return self._verbose
+
+    @verbose.setter
+    def verbose(self, new_verbose: bool) -> None:
+        self._verbose = new_verbose
+
+    @property
     def has_jumps(self):
         return len(self.jump_params) > 0
 
@@ -177,8 +189,8 @@ class Ito_diffusion(abc.ABC):
         return np.sqrt(self.scheme_step)
 
     @property
-    def time_steps(self) -> list:
-        return [step*self.scheme_step for step in range(self.scheme_steps+1)]
+    def time_steps(self) -> np.ndarray:
+        return np.linspace(0, self.T, self.scheme_steps + 1)
 
     def barrier_crossed(self, x, y, barrier) -> bool:
         """barrier is crossed if x and y are on each side of the barrier

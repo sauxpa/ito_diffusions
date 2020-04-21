@@ -1,7 +1,6 @@
 import numpy as np
-from scipy.stats import arcsine
 from ito_diffusions import BM, GBM, Bessel, BMPeriodic, SLN,\
-    Vasicek, CIR, BlackKarasinski, pseudo_GBM, Alpha_pinned_BM, F_pinned_BM,\
+    Vasicek, CIR, BlackKarasinski, pseudo_GBM, Alpha_pinned_BM,\
     FBM, Levy, Lognormal_multifractal
 
 
@@ -85,15 +84,6 @@ def test_Alpha_pinned_BM(seed: int = 0):
     assert df.std()['spot'] > 0.0, msg
 
 
-def test_F_pinned_BM(seed: int = 0):
-    np.random.seed(seed)
-    distr = arcsine(loc=0.0, scale=1.0)
-    X = F_pinned_BM(x0=0.0, distr=distr, pin=1.0)
-    df = X.simulate()
-    msg = 'Generated F_pinned_BM path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
-
-
 def test_FBM(seed: int = 0):
     np.random.seed(seed)
     X = FBM(H=0.4)
@@ -112,7 +102,7 @@ def test_Levy(seed: int = 0):
 
 def test_Lognormal_multifractal(seed: int = 0):
     np.random.seed(seed)
-    X = Lognormal_multifractal(scheme_step= 0.1)
+    X = Lognormal_multifractal(scheme_step=0.1)
     df = X.simulate()
     msg = 'Generated Lognormal_multifractal path is not stochastic.'
     assert df.std()['MRW'] > 0.0, msg
