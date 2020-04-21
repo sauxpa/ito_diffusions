@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setup(
     name='ito_diffusions',
-    version='1.0.9',
+    version='1.1.1',
     author="Patrick Saux",
     author_email="patrick.jr.saux@gmail.com",
     description="Library for stochastic process simulation",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/sauxpa/ito_diffusions",
-    install_requires=['numpy', 'scipy', 'pandas', 'mpmath'],
+    install_requires=['numpy', 'scipy', 'pandas', 'mpmath', 'tqdm'],
     python_requires='>=3.6',
 )
