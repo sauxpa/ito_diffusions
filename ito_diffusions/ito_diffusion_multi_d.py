@@ -265,7 +265,7 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
                  T: float = 1.0,
                  scheme_steps: int = 100,
                  mean_reversion: np.ndarray = np.zeros(1),
-                 long_term: np.ndarray = np.zeros(1),
+                 long_term: np.ndarray = np.ones(1),
                  vol: np.ndarray = np.eye(1),
                  keys: None = None,
                  barrier: np.ndarray = np.full(1, None),
