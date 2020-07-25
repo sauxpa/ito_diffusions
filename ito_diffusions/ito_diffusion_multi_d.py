@@ -2,6 +2,7 @@ import numpy as np
 from numpy import random as rd
 import pandas as pd
 from tqdm import tqdm
+from collections import defaultdict
 from .ito_diffusion import Ito_diffusion
 
 
@@ -26,6 +27,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
                  keys: None = None,
                  barrier: np.ndarray = np.full(1, None),
                  barrier_condition: np.ndarray = np.full(1, None),
+                 jump_params: defaultdict = defaultdict(int),
                  verbose: bool = False,
                  ) -> None:
 
@@ -34,7 +36,8 @@ class Ito_diffusion_multi_d(Ito_diffusion):
                          T=T,
                          scheme_steps=scheme_steps,
                          barrier=barrier,
-                         barrier_condition=barrier_condition
+                         barrier_condition=barrier_condition,
+                         jump_params=jump_params,
                          )
         self._keys = self._check_keys(keys)
         self._n_factors = n_factors
@@ -72,6 +75,13 @@ class Ito_diffusion_multi_d(Ito_diffusion):
                     self.vol(t, last_step), self.scheme_step_sqrt * z
                     )
                 last_step = last_step + inc
+
+                if self.has_jumps:
+                    intensities = self.jump_intensity_func(t, previous_step)
+                    jump_sizes = self.jump_size_distr.rvs()
+                    for j, intensity in enumerate(intensities):
+                        N = rd.poisson(intensity * self.scheme_step)
+                        last_step[j] += N * jump_sizes[j]
 
                 if self.barrier_condition == 'absorb':
                     for j, coord in enumerate(last_step):
