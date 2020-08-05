@@ -1,6 +1,6 @@
 import numpy as np
 from ito_diffusions import BM, GBM, Bessel, BMPeriodic, SLN,\
-    Vasicek, CIR, BlackKarasinski, pseudo_GBM, Alpha_pinned_BM,\
+    Vasicek, CIR, BlackKarasinski, pseudo_GBM, ContainedBM, Alpha_pinned_BM,\
     FBM, Levy, Lognormal_multifractal
 
 
@@ -73,6 +73,14 @@ def test_pseudo_GBM(seed: int = 0):
     X = pseudo_GBM()  # Test with default arguments
     df = X.simulate()
     msg = 'Generated pseudo_GBM path is not stochastic.'
+    assert df.std()['spot'] > 0.0, msg
+
+
+def test_ContainedBM(seed: int = 0):
+    np.random.seed(seed)
+    X = ContainedBM()  # Test with default arguments
+    df = X.simulate()
+    msg = 'Generated ContainedBM path is not stochastic.'
     assert df.std()['spot'] > 0.0, msg
 
 

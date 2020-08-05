@@ -646,6 +646,92 @@ class pseudo_GBM(Ito_diffusion_1d):
         return self.vol_double*x
 
 
+class ContainedBM(Ito_diffusion_1d):
+    """Simulate a process with the covariance structure as the Brownian motion
+    but a.s contained within bounds. Because the vol is constrained
+    to be sigma*dW_t, only the drifts remains to ensure the process stays
+    within the prescribed boundaries. A suggestion is :
+    dX_t = kappa * (1/(X_t-lo)^beta - 1/(hi-X_t)^beta) * dt + sigma * dW_t.
+    Beware, for beta>1 only do weak solutions exist (cf. Feller criterion).
+    This translates in practice by numerical instabilities should this
+    condition not hold.
+    """
+    def __init__(self,
+                 x0: np.float = 0.5,
+                 T: float = 1.0,
+                 scheme_steps: int = 100,
+                 beta: float = 1.0,
+                 kappa: float = 1.0,
+                 sigma: float = 1.0,
+                 lo: float = 0.0,
+                 hi: float = 1.0,
+                 barrier: None = None,
+                 barrier_condition: None = None,
+                 verbose: bool = False,
+                 ) -> None:
+
+        super().__init__(x0=x0,
+                         T=T,
+                         scheme_steps=scheme_steps,
+                         barrier=barrier,
+                         barrier_condition=barrier_condition,
+                         verbose=verbose,
+                         )
+        self._beta = np.float(beta)
+        self._kappa = np.float(kappa)
+        self._sigma = np.float(sigma)
+        self._lo = np.float(lo)
+        self._hi = np.float(hi)
+
+    @property
+    def kappa(self) -> float:
+        return self._kappa
+
+    @kappa.setter
+    def kappa(self, new_kappa) -> None:
+        self._kappa = new_kappa
+
+    @property
+    def beta(self) -> float:
+        return self._beta
+
+    @beta.setter
+    def beta(self, new_beta) -> None:
+        self._beta = new_beta
+
+    @property
+    def sigma(self) -> float:
+        return self._sigma
+
+    @sigma.setter
+    def sigma(self, new_sigma) -> None:
+        self._sigma = new_sigma
+
+    @property
+    def lo(self) -> float:
+        return self._lo
+
+    @lo.setter
+    def lo(self, new_lo) -> None:
+        self._lo = new_lo
+
+    @property
+    def hi(self) -> float:
+        return self._hi
+
+    @hi.setter
+    def hi(self, new_hi) -> None:
+        self._hi = new_hi
+
+    def drift(self, t, x) -> float:
+        return self.kappa * (
+            1 / (x - self.lo) ** self.beta - 1 / (self.hi - x) ** self.beta
+        )
+
+    def vol(self, t, x) -> float:
+        return self.sigma
+
+
 class Pinned_diffusion(Ito_diffusion_1d):
     """Generic class for pinned diffusions, i.e diffusions which are
     constrained to arrive at a given point at the terminal date.
