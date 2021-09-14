@@ -121,7 +121,7 @@ class PDMP(abc.ABC):
 
     @property
     def scheme_step(self) -> float:
-        return self.T/self.scheme_steps
+        return (self.T - self.t0) / self.scheme_steps
 
     @property
     def time_steps(self) -> np.ndarray:
