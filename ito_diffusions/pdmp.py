@@ -13,6 +13,7 @@ class PDMP(abc.ABC):
                  x0: float = 0.0,
                  m0: int = 0,
                  T: float = 1.0,
+                 t0: float = 0.0,
                  scheme_steps: int = 100,
                  barrier_params: defaultdict = defaultdict(list),
                  jump_params: defaultdict = defaultdict(list),
@@ -21,9 +22,13 @@ class PDMP(abc.ABC):
         self._x0 = x0
         self._m0 = m0
         self._T = T
+        self._t0 = t0
         self._scheme_steps = scheme_steps
         self._barrier_params = barrier_params
         self._jump_params = jump_params
+
+        # Technical: numerical tolerance for barrier crossing
+        self._barrier_tol = 1e-10
 
         # For tqdm
         self._verbose = verbose
@@ -51,6 +56,14 @@ class PDMP(abc.ABC):
     @T.setter
     def T(self, new_T) -> None:
         self._T = new_T
+
+    @property
+    def t0(self) -> float:
+        return self._t0
+
+    @t0.setter
+    def t0(self, new_t0) -> None:
+        self._t0 = new_t0
 
     @property
     def scheme_steps(self) -> int:
@@ -112,13 +125,14 @@ class PDMP(abc.ABC):
 
     @property
     def time_steps(self) -> np.ndarray:
-        return np.linspace(0, self.T, self.scheme_steps + 1)
+        return np.linspace(self.t0, self.T, self.scheme_steps + 1)
 
     def barrier_crossed(self, x, y, barrier) -> bool:
         """barrier is crossed if x and y are on each side of the barrier
         """
         return (
-            (x <= barrier and y >= barrier) or (x >= barrier and y <= barrier)
+            (x < barrier - self._barrier_tol and y >= barrier)
+            or (x > barrier + self._barrier_tol and y <= barrier)
         )
 
     @abc.abstractmethod
