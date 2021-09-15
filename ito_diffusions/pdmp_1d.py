@@ -16,6 +16,7 @@ class PDMP_1d(PDMP):
                  barrier_params: defaultdict = defaultdict(list),
                  jump_params: defaultdict = defaultdict(list),
                  verbose: bool = False,
+                 **kwargs,
                  ) -> None:
         super().__init__(x0=x0,
                          m0=m0,
@@ -25,6 +26,7 @@ class PDMP_1d(PDMP):
                          barrier_params=barrier_params,
                          jump_params=jump_params,
                          verbose=verbose,
+                         **kwargs,
                          )
 
     def simulate(self) -> pd.DataFrame:
@@ -34,8 +36,12 @@ class PDMP_1d(PDMP):
         last_step = self.x0
         x = np.empty(self.scheme_steps + 1)
         mode = np.empty(self.scheme_steps + 1, dtype=int)
+        natural_jump = np.zeros(self.scheme_steps + 1, dtype=bool)
+        boundary_jump = np.zeros(self.scheme_steps + 1, dtype=bool)
         x[0] = last_step
         mode[0] = last_mode
+        natural_jump[0] = False
+        boundary_jump[0] = False
 
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i, t in enumerate(self.time_steps[1:]):
@@ -52,6 +58,7 @@ class PDMP_1d(PDMP):
                             t, previous_step, last_mode
                             ).rvs()
                         )
+                    natural_jump[i + 1] = True
 
                 for barrier_idx, barrier in enumerate(self.barriers):
                     if self.barrier_crossed(previous_step, last_step, barrier):
@@ -61,11 +68,19 @@ class PDMP_1d(PDMP):
                                 ).rvs()
                             )
                         last_step = barrier
+                        boundary_jump[i + 1] = True
                         break
                 x[i + 1] = last_step
                 mode[i + 1] = last_mode
                 pbar.update(1)
-        df = pd.DataFrame({'position': x, 'mode': mode})
+        df = pd.DataFrame(
+            {
+                'position': x,
+                'mode': mode,
+                'natural_jump': natural_jump,
+                'boundary_jump': boundary_jump,
+            }
+        )
         df.index = self.time_steps
         return df
 
@@ -81,6 +96,7 @@ class PDMP_1d_linear(PDMP_1d):
                  barrier_params: defaultdict = defaultdict(list),
                  jump_params: defaultdict = defaultdict(list),
                  verbose: bool = False,
+                 **kwargs,
                  ) -> None:
         super().__init__(x0=x0,
                          m0=m0,
@@ -90,6 +106,7 @@ class PDMP_1d_linear(PDMP_1d):
                          barrier_params=barrier_params,
                          jump_params=jump_params,
                          verbose=verbose,
+                         **kwargs,
                          )
         self._drifts = drifts
 

@@ -18,6 +18,7 @@ class PDMP(abc.ABC):
                  barrier_params: defaultdict = defaultdict(list),
                  jump_params: defaultdict = defaultdict(list),
                  verbose: bool = False,
+                 **kwargs,
                  ) -> None:
         self._x0 = x0
         self._m0 = m0
