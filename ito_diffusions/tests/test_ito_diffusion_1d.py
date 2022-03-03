@@ -1,116 +1,129 @@
 import numpy as np
-from ito_diffusions import BM, GBM, Bessel, BMPeriodic, SLN,\
-    Vasicek, CIR, BlackKarasinski, pseudo_GBM, ContainedBM, Alpha_pinned_BM,\
-    FBM, Levy, Lognormal_multifractal
+from ito_diffusions import (
+    BM,
+    GBM,
+    Bessel,
+    BMPeriodic,
+    SLN,
+    Vasicek,
+    CIR,
+    BlackKarasinski,
+    pseudo_GBM,
+    ContainedBM,
+    Alpha_pinned_BM,
+    FBM,
+    Levy,
+    Lognormal_multifractal,
+)
 
 
 def test_BM(seed: int = 0):
     np.random.seed(seed)
     X = BM()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated BM path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated BM path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_GBM(seed: int = 0):
     np.random.seed(seed)
     X = GBM()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated GBM path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated GBM path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_Bessel(seed: int = 0):
     np.random.seed(seed)
     X = Bessel()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated Bessel path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated Bessel path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_BMPeriodic(seed: int = 0):
     np.random.seed(seed)
     X = BMPeriodic()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated BMPeriodic path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated BMPeriodic path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_SLN(seed: int = 0):
     np.random.seed(seed)
     X = SLN()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated SLN path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated SLN path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_Vasicek(seed: int = 0):
     np.random.seed(seed)
     X = Vasicek()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated Vasicek path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated Vasicek path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_CIR(seed: int = 0):
     np.random.seed(seed)
     X = CIR()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated CIR path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated CIR path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_BlackKarasinski(seed: int = 0):
     np.random.seed(seed)
     X = BlackKarasinski()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated BlackKarasinski path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated BlackKarasinski path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_pseudo_GBM(seed: int = 0):
     np.random.seed(seed)
     X = pseudo_GBM()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated pseudo_GBM path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated pseudo_GBM path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_ContainedBM(seed: int = 0):
     np.random.seed(seed)
     X = ContainedBM()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated ContainedBM path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated ContainedBM path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_Alpha_pinned_BM(seed: int = 0):
     np.random.seed(seed)
     X = Alpha_pinned_BM()  # Test with default arguments
     df = X.simulate()
-    msg = 'Generated Alpha_pinned_BM path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated Alpha_pinned_BM path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_FBM(seed: int = 0):
     np.random.seed(seed)
     X = FBM(H=0.4)
     df = X.simulate()
-    msg = 'Generated fBM path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated fBM path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_Levy(seed: int = 0):
     np.random.seed(seed)
     X = Levy(jump_intensity=1.0, jump_size_distr=1.0)
     df = X.simulate()
-    msg = 'Generated Levy path is not stochastic.'
-    assert df.std()['spot'] > 0.0, msg
+    msg = "Generated Levy path is not stochastic."
+    assert df.std()["spot"] > 0.0, msg
 
 
 def test_Lognormal_multifractal(seed: int = 0):
     np.random.seed(seed)
     X = Lognormal_multifractal(scheme_step=0.1)
     df = X.simulate()
-    msg = 'Generated Lognormal_multifractal path is not stochastic.'
-    assert df.std()['MRW'] > 0.0, msg
+    msg = "Generated Lognormal_multifractal path is not stochastic."
+    assert df.std()["MRW"] > 0.0, msg

@@ -9,17 +9,19 @@ class PDMP(abc.ABC):
     dX_t = drift_m(t,X_t)dt
     where m is the mode, subject to boundary and Poisson mode jumps.
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 m0: int = 0,
-                 T: float = 1.0,
-                 t0: float = 0.0,
-                 scheme_steps: int = 100,
-                 barrier_params: defaultdict = defaultdict(list),
-                 jump_params: defaultdict = defaultdict(list),
-                 verbose: bool = False,
-                 **kwargs,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        m0: int = 0,
+        T: float = 1.0,
+        t0: float = 0.0,
+        scheme_steps: int = 100,
+        barrier_params: defaultdict = defaultdict(list),
+        jump_params: defaultdict = defaultdict(list),
+        verbose: bool = False,
+        **kwargs,
+    ) -> None:
         self._x0 = x0
         self._m0 = m0
         self._T = T
@@ -100,25 +102,22 @@ class PDMP(abc.ABC):
 
     @property
     def barriers(self) -> List[float]:
-        return self.barrier_params['barriers']
+        return self.barrier_params["barriers"]
 
     @property
     def barrier_jump_mode_func(self):
-        """scipy.stats distribution
-        """
-        return self.barrier_params['jump_mode_func']
+        """scipy.stats distribution"""
+        return self.barrier_params["jump_mode_func"]
 
     @property
     def natural_jump_intensity_func(self):
-        """scipy.stats distribution
-        """
-        return self.jump_params['jump_intensity_func']
+        """scipy.stats distribution"""
+        return self.jump_params["jump_intensity_func"]
 
     @property
     def natural_jump_mode_func(self):
-        """scipy.stats distribution
-        """
-        return self.jump_params['jump_mode_func']
+        """scipy.stats distribution"""
+        return self.jump_params["jump_mode_func"]
 
     @property
     def scheme_step(self) -> float:
@@ -129,12 +128,10 @@ class PDMP(abc.ABC):
         return np.linspace(self.t0, self.T, self.scheme_steps + 1)
 
     def barrier_crossed(self, x, y, barrier) -> bool:
-        """barrier is crossed if x and y are on each side of the barrier
-        """
+        """barrier is crossed if x and y are on each side of the barrier"""
         return (
-            (x < barrier - self._barrier_tol and y >= barrier)
-            or (x > barrier + self._barrier_tol and y <= barrier)
-        )
+            x < barrier - self._barrier_tol and y >= barrier - self._barrier_tol
+        ) or (x > barrier + self._barrier_tol and y <= barrier + self._barrier_tol)
 
     @abc.abstractmethod
     def drift(self, t, x, m):

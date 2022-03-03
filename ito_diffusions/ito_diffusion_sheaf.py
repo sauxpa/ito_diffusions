@@ -1,6 +1,14 @@
 from .ito_diffusion import Ito_diffusion
-from .ito_diffusion_1d import BM, GBM, Vasicek, CIR, pseudo_GBM,\
-    Pinned_diffusion, Alpha_pinned_BM, F_pinned_BM
+from .ito_diffusion_1d import (
+    BM,
+    GBM,
+    Vasicek,
+    CIR,
+    pseudo_GBM,
+    Pinned_diffusion,
+    Alpha_pinned_BM,
+    F_pinned_BM,
+)
 
 import numpy as np
 from numpy import random as rd
@@ -29,24 +37,26 @@ import pandas as pd
 
 
 class Ito_diffusion_sheaf(Ito_diffusion):
-    """Generic class for a sheaf of Ito diffusions.
-    """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 barrier: None = None,
-                 barrier_condition: None = None
-                 ) -> None:
-        Ito_diffusion.__init__(self,
-                               x0=x0,
-                               T=T,
-                               scheme_steps=scheme_steps,
-                               barrier=barrier,
-                               barrier_condition=barrier_condition
-                               )
+    """Generic class for a sheaf of Ito diffusions."""
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        barrier: None = None,
+        barrier_condition: None = None,
+    ) -> None:
+        Ito_diffusion.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
         self._n_paths = n_paths
         self._path_mixing = np.float(path_mixing)
 
@@ -68,35 +78,32 @@ class Ito_diffusion_sheaf(Ito_diffusion):
 
     @property
     def path_noise_stddev(self) -> float:
-        return np.sqrt(1-self.path_mixing**2)
+        return np.sqrt(1 - self.path_mixing**2)
 
     def simulate(self) -> pd.DataFrame:
-        """Euler-Maruyama scheme
-        """
+        """Euler-Maruyama scheme"""
         paths = dict()
         gaussian_inc = rd.randn(self.scheme_steps)
         for n in range(self.n_paths):
             last_step = self.x0
-            x = np.empty(self.scheme_steps+1)
+            x = np.empty(self.scheme_steps + 1)
             x[0] = last_step
             for i, t in enumerate(self.time_steps[1:]):
                 z = rd.randn() * self.path_noise_stddev
                 previous_step = last_step
-                last_step += self.drift(t, last_step) * self.scheme_step\
-                    + self.vol(t, last_step) * self.scheme_step_sqrt * (
-                        gaussian_inc[i] + z
-                    )
+                last_step += self.drift(t, last_step) * self.scheme_step + self.vol(
+                    t, last_step
+                ) * self.scheme_step_sqrt * (gaussian_inc[i] + z)
 
-                if (self.barrier_condition == 'absorb'
+                if (
+                    self.barrier_condition == "absorb"
                     and self.barrier is not None
-                    and self.barrier_crossed(
-                        previous_step,
-                        last_step,
-                        self.barrier)):
+                    and self.barrier_crossed(previous_step, last_step, self.barrier)
+                ):
                     last_step = self.barrier
 
                 x[i + 1] = last_step
-            paths['path {}'.format(n)] = x
+            paths["path {}".format(n)] = x
 
         df = pd.DataFrame(paths)
         df.index = self.time_steps
@@ -109,35 +116,39 @@ class BM_sheaf(Ito_diffusion_sheaf, BM):
     dX_t = drift*dt + vol*dW_t
     where drift and vol are real numbers
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 drift: float = 0.0,
-                 vol: float = 1.0,
-                 barrier: None = None,
-                 barrier_condition: None = None
-                 ) -> None:
-        Ito_diffusion_sheaf.__init__(self,
-                                     x0=x0,
-                                     T=T,
-                                     scheme_steps=scheme_steps,
-                                     n_paths=n_paths,
-                                     path_mixing=path_mixing,
-                                     barrier=barrier,
-                                     barrier_condition=barrier_condition
-                                     )
-        BM.__init__(self,
-                    x0=x0,
-                    T=T,
-                    scheme_steps=scheme_steps,
-                    drift=drift,
-                    vol=vol,
-                    barrier=barrier,
-                    barrier_condition=barrier_condition
-                    )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        drift: float = 0.0,
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+    ) -> None:
+        Ito_diffusion_sheaf.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
+        BM.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            drift=drift,
+            vol=vol,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
 
 
 class GBM_sheaf(Ito_diffusion_sheaf, GBM):
@@ -146,35 +157,39 @@ class GBM_sheaf(Ito_diffusion_sheaf, GBM):
     dX_t = drift*X_t*dt + vol*X_t*dW_t
     where drift and vol are real numbers
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 drift: float = 0.0,
-                 vol: float = 1.0,
-                 barrier: None = None,
-                 barrier_condition: None = None
-                 ):
-        Ito_diffusion_sheaf.__init__(self,
-                                     x0=x0,
-                                     T=T,
-                                     scheme_steps=scheme_steps,
-                                     n_paths=n_paths,
-                                     path_mixing=path_mixing,
-                                     barrier=barrier,
-                                     barrier_condition=barrier_condition
-                                     )
-        GBM.__init__(self,
-                     x0=x0,
-                     T=T,
-                     scheme_steps=scheme_steps,
-                     drift=drift,
-                     vol=vol,
-                     barrier=barrier,
-                     barrier_condition=barrier_condition
-                     )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        drift: float = 0.0,
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+    ):
+        Ito_diffusion_sheaf.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
+        GBM.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            drift=drift,
+            vol=vol,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
 
 
 class Vasicek_sheaf(Ito_diffusion_sheaf, Vasicek):
@@ -183,37 +198,41 @@ class Vasicek_sheaf(Ito_diffusion_sheaf, Vasicek):
     dX_t = mean_reversion*(long_term-X_t)*dt + vol*dW_t
     where mean_reversion, long_term and vol are real numbers
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 mean_reversion: float = 1.0,
-                 long_term: float = 0.0,
-                 vol: float = 1.0,
-                 barrier: None = None,
-                 barrier_condition: None = None
-                 ) -> None:
-        Ito_diffusion_sheaf.__init__(self,
-                                     x0,
-                                     T,
-                                     scheme_steps,
-                                     n_paths=n_paths,
-                                     path_mixing=path_mixing,
-                                     barrier=barrier,
-                                     barrier_condition=barrier_condition
-                                     )
-        Vasicek.__init__(self,
-                         x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         mean_reversion=mean_reversion,
-                         long_term=long_term,
-                         vol=vol,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition
-                         )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        mean_reversion: float = 1.0,
+        long_term: float = 0.0,
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+    ) -> None:
+        Ito_diffusion_sheaf.__init__(
+            self,
+            x0,
+            T,
+            scheme_steps,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
+        Vasicek.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            mean_reversion=mean_reversion,
+            long_term=long_term,
+            vol=vol,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
 
 
 class CIR_sheaf(Ito_diffusion_sheaf, CIR):
@@ -222,37 +241,41 @@ class CIR_sheaf(Ito_diffusion_sheaf, CIR):
     dX_t = mean_reversion*(long_term-X_t)*dt + vol*sqrt(X_t)*dW_t
     where mean_reversion, long_term and vol are real numbers
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 mean_reversion: float = 1.0,
-                 long_term: float = 0.0,
-                 vol: float = 1.0,
-                 barrier: None = None,
-                 barrier_condition: None = None
-                 ) -> None:
-        Ito_diffusion_sheaf.__init__(self,
-                                     x0,
-                                     T,
-                                     scheme_steps,
-                                     n_paths=n_paths,
-                                     path_mixing=path_mixing,
-                                     barrier=barrier,
-                                     barrier_condition=barrier_condition
-                                     )
-        CIR.__init__(self,
-                     x0=x0,
-                     T=T,
-                     scheme_steps=scheme_steps,
-                     mean_reversion=mean_reversion,
-                     long_term=long_term,
-                     vol=vol,
-                     barrier=barrier,
-                     barrier_condition=barrier_condition
-                     )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        mean_reversion: float = 1.0,
+        long_term: float = 0.0,
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+    ) -> None:
+        Ito_diffusion_sheaf.__init__(
+            self,
+            x0,
+            T,
+            scheme_steps,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
+        CIR.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            mean_reversion=mean_reversion,
+            long_term=long_term,
+            vol=vol,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
 
 
 class pseudo_GBM_sheaf(Ito_diffusion_sheaf, pseudo_GBM):
@@ -260,35 +283,39 @@ class pseudo_GBM_sheaf(Ito_diffusion_sheaf, pseudo_GBM):
     dX_t = drift*dt + vol*X_t*dW_t
     where r and vol are real numbers
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 drift: float = 0.0,
-                 vol: float = 1.0,
-                 barrier: None = None,
-                 barrier_condition: None = None
-                 ) -> None:
-        Ito_diffusion_sheaf.__init__(self,
-                                     x0,
-                                     T,
-                                     scheme_steps,
-                                     n_paths=n_paths,
-                                     path_mixing=path_mixing,
-                                     barrier=barrier,
-                                     barrier_condition=barrier_condition
-                                     )
-        pseudo_GBM.__init__(self,
-                            x0=x0,
-                            T=T,
-                            scheme_steps=scheme_steps,
-                            drift=drift,
-                            vol=vol,
-                            barrier=barrier,
-                            barrier_condition=barrier_condition
-                            )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        drift: float = 0.0,
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+    ) -> None:
+        Ito_diffusion_sheaf.__init__(
+            self,
+            x0,
+            T,
+            scheme_steps,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
+        pseudo_GBM.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            drift=drift,
+            vol=vol,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+        )
 
 
 class Pinned_diffusion_sheaf(Ito_diffusion_sheaf, Pinned_diffusion):
@@ -296,29 +323,23 @@ class Pinned_diffusion_sheaf(Ito_diffusion_sheaf, Pinned_diffusion):
     i.e diffusions which are constrained to arrive at a given point
     at the terminal date.
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 pin: float = 0.0,
-                 vol: float = 1.0,
-                 ) -> None:
-        Ito_diffusion_sheaf.__init__(self,
-                                     x0,
-                                     T,
-                                     scheme_steps,
-                                     n_paths=n_paths,
-                                     path_mixing=path_mixing
-                                     )
-        Pinned_diffusion.__init__(self,
-                                  x0=x0,
-                                  T=T,
-                                  scheme_steps=scheme_steps,
-                                  vol=vol,
-                                  pin=pin
-                                  )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        pin: float = 0.0,
+        vol: float = 1.0,
+    ) -> None:
+        Ito_diffusion_sheaf.__init__(
+            self, x0, T, scheme_steps, n_paths=n_paths, path_mixing=path_mixing
+        )
+        Pinned_diffusion.__init__(
+            self, x0=x0, T=T, scheme_steps=scheme_steps, vol=vol, pin=pin
+        )
 
 
 class Alpha_pinned_BM_sheaf(Pinned_diffusion_sheaf, Alpha_pinned_BM):
@@ -327,32 +348,30 @@ class Alpha_pinned_BM_sheaf(Pinned_diffusion_sheaf, Alpha_pinned_BM):
     dX_t = alpha*(y-X_t)/(T-t)*dt + vol*dW_t
     where alpha, y (pin) and vol are real numbers
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 alpha: float = 1.0,
-                 vol: float = 1.0,
-                 pin: float = 0.0,
-                 ) -> None:
-        Pinned_diffusion_sheaf.__init__(self,
-                                        x0=x0,
-                                        T=T,
-                                        scheme_steps=scheme_steps,
-                                        pin=pin,
-                                        n_paths=n_paths,
-                                        path_mixing=path_mixing
-                                        )
-        Alpha_pinned_BM.__init__(self,
-                                 x0=x0,
-                                 T=T,
-                                 scheme_steps=scheme_steps,
-                                 alpha=alpha,
-                                 vol=vol,
-                                 pin=pin
-                                 )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        alpha: float = 1.0,
+        vol: float = 1.0,
+        pin: float = 0.0,
+    ) -> None:
+        Pinned_diffusion_sheaf.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            pin=pin,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+        )
+        Alpha_pinned_BM.__init__(
+            self, x0=x0, T=T, scheme_steps=scheme_steps, alpha=alpha, vol=vol, pin=pin
+        )
 
 
 class F_pinned_BM_sheaf(Pinned_diffusion_sheaf, F_pinned_BM):
@@ -362,27 +381,26 @@ class F_pinned_BM_sheaf(Pinned_diffusion_sheaf, F_pinned_BM):
     where y (pin) is a real number, f and F respectively the pdf and cdf
     of a probability distribution over [0,T]
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_paths: int = 10,
-                 path_mixing: float = 0.99,
-                 distr: None = None,
-                 pin: float = 0.0,
-                 ) -> None:
-        Pinned_diffusion_sheaf.__init__(self,
-                                        x0=x0,
-                                        T=T,
-                                        scheme_steps=scheme_steps,
-                                        pin=pin,
-                                        n_paths=n_paths,
-                                        path_mixing=path_mixing
-                                        )
-        F_pinned_BM.__init__(self,
-                             x0=x0,
-                             T=T,
-                             scheme_steps=scheme_steps,
-                             distr=distr,
-                             pin=pin
-                             )
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_paths: int = 10,
+        path_mixing: float = 0.99,
+        distr: None = None,
+        pin: float = 0.0,
+    ) -> None:
+        Pinned_diffusion_sheaf.__init__(
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            pin=pin,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+        )
+        F_pinned_BM.__init__(
+            self, x0=x0, T=T, scheme_steps=scheme_steps, distr=distr, pin=pin
+        )

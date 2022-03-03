@@ -25,14 +25,15 @@ from functools import lru_cache
 #
 
 
-class Fractional_Gaussian_Noise():
-    def __init__(self,
-                 H: float = 0.5,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 method: str = 'vector',
-                 n_kl: int = 100,
-                 ) -> None:
+class Fractional_Gaussian_Noise:
+    def __init__(
+        self,
+        H: float = 0.5,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        method: str = "vector",
+        n_kl: int = 100,
+    ) -> None:
         self._T = T
         self._scheme_steps = scheme_steps
         self._H = H
@@ -53,7 +54,7 @@ class Fractional_Gaussian_Noise():
 
     @property
     def time_steps(self) -> list:
-        return [step*self.scheme_step for step in range(self.scheme_steps+1)]
+        return [step * self.scheme_step for step in range(self.scheme_steps + 1)]
 
     @property
     def T(self) -> float:
@@ -92,37 +93,33 @@ class Fractional_Gaussian_Noise():
         self._method = new_method
 
     def covariance(self, s, t) -> float:
-        return 0.5*(t**(2*self.H)+s**(2*self.H)-np.abs(t-s)**(2*self.H))
+        return 0.5 * (
+            t ** (2 * self.H) + s ** (2 * self.H) - np.abs(t - s) ** (2 * self.H)
+        )
 
     def covariance_matrix(self) -> np.ndarray:
-        cov = np.zeros((self.scheme_steps+1, self.scheme_steps+1))
-        for i in range(self.scheme_steps+1):
-            cov[i][i] = (i*self.scheme_step)**(2*self.H)
+        cov = np.zeros((self.scheme_steps + 1, self.scheme_steps + 1))
+        for i in range(self.scheme_steps + 1):
+            cov[i][i] = (i * self.scheme_step) ** (2 * self.H)
             for j in range(i):
-                cov[i][j] = self.covariance(
-                    i * self.scheme_step, j * self.scheme_step
-                    )
+                cov[i][j] = self.covariance(i * self.scheme_step, j * self.scheme_step)
                 cov[j][i] = cov[i][j]
         return cov
 
     def simulate_vector_method(self) -> np.ndarray:
-        """fBM samples are simulated as a correlated gaussian vector.
-        """
+        """fBM samples are simulated as a correlated gaussian vector."""
         cum_noise = rd.multivariate_normal(
-            np.zeros((self.scheme_steps + 1,)),
-            self.covariance_matrix()
-            )
+            np.zeros((self.scheme_steps + 1,)), self.covariance_matrix()
+        )
         return cum_noise[1:] - cum_noise[:-1]
 
     def g_lo(self, t: float) -> float:
-        """ Helper function for KL simulation of fBM with H<1/2
-        """
-        return t ** (2*self.H)
+        """Helper function for KL simulation of fBM with H<1/2"""
+        return t ** (2 * self.H)
 
     def g_hi(self, t: float) -> float:
-        """ Helper function for KL simulation of fBM with H>1/2
-        """
-        return -2*self.H * (2*self.H-1) * (t ** (2*self.H-2))
+        """Helper function for KL simulation of fBM with H>1/2"""
+        return -2 * self.H * (2 * self.H - 1) * (t ** (2 * self.H - 2))
 
     @lru_cache(maxsize=None)
     def coeff_kl(self):
@@ -131,15 +128,18 @@ class Fractional_Gaussian_Noise():
         does not support complex arguments; mpmath handles this but
         is not vectorized.
         """
-        gb_ratio = np.sqrt(gamma(2-2*self.H)/beta(self.H-0.5, 1.5-self.H))
-        a = [gb_ratio/np.sqrt(2*self.H-1)]
-        for k in range(1, self.n_kl+1):
+        gb_ratio = np.sqrt(gamma(2 - 2 * self.H) / beta(self.H - 0.5, 1.5 - self.H))
+        a = [gb_ratio / np.sqrt(2 * self.H - 1)]
+        for k in range(1, self.n_kl + 1):
             a.append(
-                gb_ratio*np.sqrt(
-                    2*float(
+                gb_ratio
+                * np.sqrt(
+                    2
+                    * float(
                         mp.re(
-                            1j * np.exp(-self.H*np.pi*1j)
-                            * mp.gammainc(2*self.H-1, 0, k*np.pi*1j)
+                            1j
+                            * np.exp(-self.H * np.pi * 1j)
+                            * mp.gammainc(2 * self.H - 1, 0, k * np.pi * 1j)
                         )
                     )
                 )
@@ -154,7 +154,7 @@ class Fractional_Gaussian_Noise():
         # cum_noise = []
         cum_noise = np.empty(self.scheme_steps)
         if self.H <= 0.5:
-            raise ValueError('H<=0.5 is not supported for KL method.')
+            raise ValueError("H<=0.5 is not supported for KL method.")
         elif self.H > 0.5:
             gauss_x = rd.randn(self.n_kl)
             gauss_y = rd.randn(self.n_kl)
@@ -162,26 +162,21 @@ class Fractional_Gaussian_Noise():
             # the below is memoized
             a = self.coeff_kl()
             for i, t in enumerate(self.time_steps):
-                i_range = np.array(
-                    range(1, self.n_kl + 1)
-                    ) * np.pi * t / self.T
+                i_range = np.array(range(1, self.n_kl + 1)) * np.pi * t / self.T
                 sx = np.multiply((1 - np.cos(i_range)), gauss_x)
                 sy = np.multiply(np.sin(i_range), gauss_y)
                 s = a[0] * t / self.T * gauss_0 + np.dot(a[1:], sx + sy)
                 cum_noise[i] = s
         # cast to numpy and rescale
         # cum_noise = np.array(cum_noise) * self.T ** self.H
-        cum_noise = cum_noise * self.T ** self.H
+        cum_noise = cum_noise * self.T**self.H
         return cum_noise[1:] - cum_noise[:-1]
 
     def simulate(self) -> np.ndarray:
-        """Returns increments of the fBM.
-        """
-        if self.method == 'vector':
+        """Returns increments of the fBM."""
+        if self.method == "vector":
             return self.simulate_vector_method()
-        elif self.method == 'kl':
+        elif self.method == "kl":
             return self.simulate_kl_method()
         else:
-            raise NameError(
-                'Unsupported simulation method : {}'.format(self.method)
-                )
+            raise NameError("Unsupported simulation method : {}".format(self.method))

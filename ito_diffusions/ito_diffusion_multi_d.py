@@ -7,7 +7,7 @@ from .ito_diffusion import Ito_diffusion
 
 
 class Ito_diffusion_multi_d(Ito_diffusion):
-    """ Generic class for multidimensional Ito diffusion
+    """Generic class for multidimensional Ito diffusion
     x0, drift and vol can be supplied as list/np.array...
     they will be casted to np.array
     x0 : initial vector, the dimension d of which is used to infer the
@@ -19,26 +19,29 @@ class Ito_diffusion_multi_d(Ito_diffusion):
     Example syntax : barrier=(0, None) means the boundary condition is on the
     first coordinate only, at 0.
     """
-    def __init__(self,
-                 x0: np.ndarray = np.zeros(1),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 n_factors: int = 1,
-                 keys: None = None,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 jump_params: defaultdict = defaultdict(int),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.zeros(1),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        n_factors: int = 1,
+        keys: None = None,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        jump_params: defaultdict = defaultdict(int),
+        verbose: bool = False,
+    ) -> None:
 
         x0 = np.array(x0)
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         jump_params=jump_params,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            jump_params=jump_params,
+        )
         self._keys = self._check_keys(keys)
         self._n_factors = n_factors
 
@@ -48,7 +51,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
 
     def _check_keys(self, keys: list) -> list:
         if not keys:
-            keys = ['dim_{}'.format(i) for i in range(self.d)]
+            keys = ["dim_{}".format(i) for i in range(self.d)]
         return keys
 
     @property
@@ -60,8 +63,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
         self._keys = self._check_keys(new_keys)
 
     def simulate(self) -> pd.DataFrame:
-        """Euler-Maruyama scheme
-        """
+        """Euler-Maruyama scheme"""
         last_step = self.x0
         x = np.empty((self.scheme_steps + 1, self.d))
         x[0, :] = last_step
@@ -73,7 +75,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
                 z = rd.randn(self._n_factors)
                 inc = self.drift(t, last_step) * self.scheme_step + np.dot(
                     self.vol(t, last_step), self.scheme_step_sqrt * z
-                    )
+                )
                 last_step = last_step + inc
 
                 if self.has_jumps:
@@ -83,14 +85,11 @@ class Ito_diffusion_multi_d(Ito_diffusion):
                         N = rd.poisson(intensity * self.scheme_step)
                         last_step[j] += N * jump_sizes[j]
 
-                if self.barrier_condition == 'absorb':
+                if self.barrier_condition == "absorb":
                     for j, coord in enumerate(last_step):
-                        if (self.barrier[j] is not None
-                            and self.barrier_crossed(
-                                previous_step[j],
-                                coord,
-                                self.barrier[j]
-                                )):
+                        if self.barrier[j] is not None and self.barrier_crossed(
+                            previous_step[j], coord, self.barrier[j]
+                        ):
                             last_step[j] = self.barrier[j]
                 x[i + 1, :] = last_step
                 pbar.update(1)
@@ -108,30 +107,33 @@ class BM_multi_d(Ito_diffusion_multi_d):
     dX_t = drift*dt + vol*dW_t
     where drift and vol are real vector and matrix respectively
     """
-    def __init__(self,
-                 x0: np.ndarray = np.zeros(1),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 drift: np.ndarray = np.zeros(1),
-                 vol: np.ndarray = np.eye(1),
-                 keys: None = None,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.zeros(1),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        drift: np.ndarray = np.zeros(1),
+        vol: np.ndarray = np.eye(1),
+        keys: None = None,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
         self._drift_vector = np.array(drift)
         # vol is actually a covariance matrix here
         self._vol_matrix = np.array(vol)
         n_factors = self._vol_matrix.shape[1]
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         keys=keys,
-                         n_factors=n_factors,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            keys=keys,
+            n_factors=n_factors,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @property
     def drift_vector(self) -> np.ndarray:
@@ -161,30 +163,33 @@ class GBM_multi_d(Ito_diffusion_multi_d):
     dX_t = drift*X_t*dt + vol*X_t*dW_t
     where drift and vol are real vector and matrix respectively
     """
-    def __init__(self,
-                 x0: np.ndarray = np.ones(1),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 drift: np.ndarray = np.zeros(1),
-                 vol: np.ndarray = np.eye(1),
-                 keys: None = None,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.ones(1),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        drift: np.ndarray = np.zeros(1),
+        vol: np.ndarray = np.eye(1),
+        keys: None = None,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
         self._drift_vector = np.array(drift)
         # vol is actually a covariance matrix here
         self._vol_matrix = np.array(vol)
         n_factors = self._vol_matrix.shape[1]
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         n_factors=n_factors,
-                         keys=keys,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_factors=n_factors,
+            keys=keys,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @property
     def drift_vector(self) -> np.ndarray:
@@ -215,33 +220,36 @@ class Vasicek_multi_d(Ito_diffusion_multi_d):
     dX_t = mean_reversion*(long_term-X_t)*dt + vol*dW_t
     where mean_reversion, long_term and vol are real numbers.
     """
-    def __init__(self,
-                 x0: np.ndarray = np.ones(1),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 mean_reversion: np.ndarray = np.zeros(1),
-                 long_term: np.ndarray = np.zeros(1),
-                 vol: np.ndarray = np.eye(1),
-                 keys: None = None,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.ones(1),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        mean_reversion: np.ndarray = np.zeros(1),
+        long_term: np.ndarray = np.zeros(1),
+        vol: np.ndarray = np.eye(1),
+        keys: None = None,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
 
         self._mean_reversion = np.array(mean_reversion)
         self._long_term = np.array(long_term)
         # vol is actually a covariance matrix here
         self._vol_matrix = np.array(vol)
         n_factors = self._vol_matrix.shape[1]
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         n_factors=n_factors,
-                         keys=keys,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_factors=n_factors,
+            keys=keys,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @property
     def mean_reversion(self) -> np.ndarray:
@@ -280,30 +288,33 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
     dlog(X_t) = mean_reversion*(long_term-log(X_t))*dt + vol*dW_t
     where mean_reversion, long_term and vol are real numbers.
     """
-    def __init__(self,
-                 x0: np.ndarray = np.ones(1),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 mean_reversion: np.ndarray = np.zeros(1),
-                 long_term: np.ndarray = np.ones(1),
-                 vol: np.ndarray = np.eye(1),
-                 keys: None = None,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
 
-        super().__init__(x0=np.log(x0),
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         mean_reversion=mean_reversion,
-                         long_term=np.log(long_term),
-                         vol=vol,
-                         keys=keys,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+    def __init__(
+        self,
+        x0: np.ndarray = np.ones(1),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        mean_reversion: np.ndarray = np.zeros(1),
+        long_term: np.ndarray = np.ones(1),
+        vol: np.ndarray = np.eye(1),
+        keys: None = None,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
+
+        super().__init__(
+            x0=np.log(x0),
+            T=T,
+            scheme_steps=scheme_steps,
+            mean_reversion=mean_reversion,
+            long_term=np.log(long_term),
+            vol=vol,
+            keys=keys,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @Vasicek_multi_d.long_term.setter
     def long_term(self, new_long_term) -> None:
@@ -327,31 +338,34 @@ class SABR(Ito_diffusion_multi_d):
     d<W,B>_t = rho*dt
     where beta, vov, rho are real numbers
     """
-    def __init__(self,
-                 x0: np.ndarray = np.array([1.0, 1.0]),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 keys: None = None,
-                 beta: float = 1.0,
-                 vov: float = 1.0,
-                 rho: float = 0.0,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.array([1.0, 1.0]),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        keys: None = None,
+        beta: float = 1.0,
+        vov: float = 1.0,
+        rho: float = 0.0,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
         self._beta = np.float(beta)
         self._vov = np.float(vov)
         self._rho = np.float(rho)
         n_factors = 2
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         n_factors=n_factors,
-                         keys=keys,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_factors=n_factors,
+            keys=keys,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @property
     def beta(self) -> float:
@@ -379,7 +393,7 @@ class SABR(Ito_diffusion_multi_d):
 
     @property
     def rho_dual(self) -> float:
-        return np.sqrt(1-self.rho**2)
+        return np.sqrt(1 - self.rho**2)
 
     def drift(self, t, x) -> np.ndarray:
         return np.zeros_like(x)
@@ -391,7 +405,7 @@ class SABR(Ito_diffusion_multi_d):
         return np.array(
             [
                 [x[1] * (x[0]) ** self.beta, 0],
-                [self.vov*x[1]*self.rho, self.vov*x[1]*self.rho_dual]
+                [self.vov * x[1] * self.rho, self.vov * x[1] * self.rho_dual],
             ]
         )
 
@@ -404,35 +418,38 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
     C(x) = exp(-c*log((y+shift)/K_max)^2)
     where shift, K_max, c, vov, rho are real numbers
     """
-    def __init__(self,
-                 x0: np.ndarray = np.array([1.0, 1.0]),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 keys: None = None,
-                 shift: float = 0.0,
-                 K_max: float = 1.0,
-                 c: float = 1.0,
-                 vov: float = 1.0,
-                 rho: float = 0.0,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.array([1.0, 1.0]),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        keys: None = None,
+        shift: float = 0.0,
+        K_max: float = 1.0,
+        c: float = 1.0,
+        vov: float = 1.0,
+        rho: float = 0.0,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
         self._shift = np.float(shift)
         self._K_max = np.float(K_max)
         self._c = np.float(c)
         self._vov = np.float(vov)
         self._rho = np.float(rho)
         n_factors = 2
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         n_factors=n_factors,
-                         keys=keys,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_factors=n_factors,
+            keys=keys,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @property
     def shift(self) -> float:
@@ -476,7 +493,7 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
 
     @property
     def rho_dual(self) -> float:
-        return np.sqrt(1-self.rho**2)
+        return np.sqrt(1 - self.rho**2)
 
     def drift(self, t, x: np.ndarray) -> np.ndarray:
         return np.zeros_like(x)
@@ -487,11 +504,12 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
         """
         return np.array(
             [
-                [x[1] * np.exp(
-                    -self.c * np.log(
-                        (x[0] + self.shift) / self.K_max
-                        ) ** 2), 0],
-                [self.vov * x[1] * self.rho, self.vov * x[1] * self.rho_dual]
+                [
+                    x[1]
+                    * np.exp(-self.c * np.log((x[0] + self.shift) / self.K_max) ** 2),
+                    0,
+                ],
+                [self.vov * x[1] * self.rho, self.vov * x[1] * self.rho_dual],
             ]
         )
 
@@ -506,35 +524,38 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
     mode = alpha*((beta-1)/(beta+1))^(1-beta)
     where shift, mode, beta, vov, rho are real numbers
     """
-    def __init__(self,
-                 x0: np.ndarray = np.array([1.0, 1.0]),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 keys: None = None,
-                 shift: float = 0.0,
-                 mode: float = 1.0,
-                 beta: float = 1.0,
-                 vov: float = 1.0,
-                 rho: float = 0.0,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.array([1.0, 1.0]),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        keys: None = None,
+        shift: float = 0.0,
+        mode: float = 1.0,
+        beta: float = 1.0,
+        vov: float = 1.0,
+        rho: float = 0.0,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
         self._shift = np.float(shift)
         self._mode = np.float(mode)
         self._beta = np.float(beta)
         self._vov = np.float(vov)
         self._rho = np.float(rho)
         n_factors = 2
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         n_factors=n_factors,
-                         keys=keys,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_factors=n_factors,
+            keys=keys,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @property
     def shift(self) -> float:
@@ -578,18 +599,14 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
 
     @property
     def rho_dual(self) -> float:
-        return np.sqrt(1-self.rho**2)
+        return np.sqrt(1 - self.rho**2)
 
     def drift(self, t, x: np.ndarray) -> np.ndarray:
         return np.zeros_like(x)
 
     @property
     def alpha(self):
-        return self.mode / (
-            (
-                (self.beta - 1) / (self.beta + 1)
-            ) ** (1 - self.beta)
-        )
+        return self.mode / (((self.beta - 1) / (self.beta + 1)) ** (1 - self.beta))
 
     def vol(self, t, x: np.ndarray) -> np.ndarray:
         """Project dB onto dW and an orhtogonal white noise dZ
@@ -598,16 +615,14 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
         return np.array(
             [
                 [
-                    x[1] * self.beta / self.alpha
+                    x[1]
+                    * self.beta
+                    / self.alpha
                     * ((x[0] + self.shift) / self.alpha) ** (self.beta - 1)
-                    / (1
-                       + ((x[0] + self.shift) / self.alpha) ** self.beta) ** 2,
-                    0
+                    / (1 + ((x[0] + self.shift) / self.alpha) ** self.beta) ** 2,
+                    0,
                 ],
-                [
-                    self.vov * x[1] * self.rho,
-                    self.vov * x[1] * self.rho_dual
-                ]
+                [self.vov * x[1] * self.rho, self.vov * x[1] * self.rho_dual],
             ]
         )
 
@@ -621,33 +636,36 @@ class SABR_tanh(Ito_diffusion_multi_d):
     C(x) = tanh((x+shift)/l)
     where shift, l, vov, rho are real numbers
     """
-    def __init__(self,
-                 x0: np.ndarray = np.array([1.0, 1.0]),
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 keys: None = None,
-                 shift: float = 0.0,
-                 l: float = 1.0,
-                 vov: float = 1.0,
-                 rho: float = 0.0,
-                 barrier: np.ndarray = np.full(1, None),
-                 barrier_condition: np.ndarray = np.full(1, None),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: np.ndarray = np.array([1.0, 1.0]),
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        keys: None = None,
+        shift: float = 0.0,
+        l: float = 1.0,
+        vov: float = 1.0,
+        rho: float = 0.0,
+        barrier: np.ndarray = np.full(1, None),
+        barrier_condition: np.ndarray = np.full(1, None),
+        verbose: bool = False,
+    ) -> None:
         self._shift = np.float(shift)
         self._l = np.float(l)
         self._vov = np.float(vov)
         self._rho = np.float(rho)
         n_factors = 2
-        super().__init__(x0=x0,
-                         T=T,
-                         scheme_steps=scheme_steps,
-                         n_factors=n_factors,
-                         keys=keys,
-                         barrier=barrier,
-                         barrier_condition=barrier_condition,
-                         verbose=verbose,
-                         )
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_factors=n_factors,
+            keys=keys,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            verbose=verbose,
+        )
 
     @property
     def shift(self) -> float:
@@ -683,7 +701,7 @@ class SABR_tanh(Ito_diffusion_multi_d):
 
     @property
     def rho_dual(self) -> float:
-        return np.sqrt(1-self.rho**2)
+        return np.sqrt(1 - self.rho**2)
 
     def drift(self, t, x: np.ndarray) -> np.ndarray:
         return np.zeros_like(x)
@@ -695,6 +713,6 @@ class SABR_tanh(Ito_diffusion_multi_d):
         return np.array(
             [
                 [x[1] * np.tanh((x[0] + self.shift) / self.l), 0],
-                [self.vov * x[1] * self.rho, self.vov * x[1] * self.rho_dual]
+                [self.vov * x[1] * self.rho, self.vov * x[1] * self.rho_dual],
             ]
         )

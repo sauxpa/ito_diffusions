@@ -4,7 +4,7 @@ from functools import lru_cache
 from tqdm import tqdm
 
 
-class FastChordalSLEHalfPlane():
+class FastChordalSLEHalfPlane:
     """Simulate chordal Schramm Loewner Evolution
     random planar curve in the complex half-plane.
     Chordal here means the curve goes from a boundary
@@ -16,13 +16,15 @@ class FastChordalSLEHalfPlane():
     ----------
     https://arxiv.org/pdf/math/0508002.pdf
     """
-    def __init__(self,
-                 scheme_steps: int = 1000,
-                 kappa: float = 0.0,
-                 T: float = 1.0,
-                 x0: complex = 0j,
-                 verbose=False,
-                 ):
+
+    def __init__(
+        self,
+        scheme_steps: int = 1000,
+        kappa: float = 0.0,
+        T: float = 1.0,
+        x0: complex = 0j,
+        verbose=False,
+    ):
         self._scheme_steps = scheme_steps
         self._kappa = kappa
         self._T = T
@@ -89,14 +91,9 @@ class FastChordalSLEHalfPlane():
         return self.T / self.scheme_steps
 
     def _h(self, z: complex, alpha: float) -> complex:
-        return (
-            z + 2 * np.sqrt(
-                (self.scheme_step * (1 - alpha))/alpha)
-            ) ** (1 - alpha) * (
-                z - 2 * np.sqrt(
-                    (self.scheme_step * alpha) / (1 - alpha)
-                    )
-                ) ** alpha
+        return (z + 2 * np.sqrt((self.scheme_step * (1 - alpha)) / alpha)) ** (
+            1 - alpha
+        ) * (z - 2 * np.sqrt((self.scheme_step * alpha) / (1 - alpha))) ** alpha
 
     def simulate(self):
         """Simulate by recursively computing the sequence
@@ -107,25 +104,10 @@ class FastChordalSLEHalfPlane():
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i in range(1, self.scheme_steps + 1):
                 if np.random.rand() > 0.5:
-                    z = np.concatenate(
-                        [
-                            [0.0],
-                            self._h(z, self.alpha_plus)
-                        ]
-                    )
+                    z = np.concatenate([[0.0], self._h(z, self.alpha_plus)])
                 else:
-                    z = np.concatenate(
-                        [
-                            [self.x0],
-                            self._h(z, self.alpha_minus)
-                        ]
-                    )
+                    z = np.concatenate([[self.x0], self._h(z, self.alpha_minus)])
                 pbar.update(1)
-        df = pd.DataFrame(
-            {
-                'x': np.real(z + self.x0),
-                'y': np.imag(z + self.x0)
-            }
-        )
+        df = pd.DataFrame({"x": np.real(z + self.x0), "y": np.imag(z + self.x0)})
         df.index = np.linspace(0, self.T, self.scheme_steps + 1)
         return df

@@ -23,26 +23,27 @@ def rotation_matrix_2d(theta: float, round: int = 12) -> np.ndarray:
                 [np.sin(theta), np.cos(theta)],
             ]
         ),
-        round
+        round,
     )
 
 
 def v_dot(a: np.ndarray) -> np.ndarray:
-    """Define a dot product function used for the rotate operation.
-    """
+    """Define a dot product function used for the rotate operation."""
     return lambda b: np.dot(a, b)
 
 
-class SAW_2D():
+class SAW_2D:
     """Simulate Self-Avoiding Walks on regular 2D lattices
     using the pivot algorithm
     """
-    def __init__(self,
-                 scheme_steps: int = 1000,
-                 n_success: int = 500,
-                 p: int = 4,
-                 verbose: bool = False,
-                 ):
+
+    def __init__(
+        self,
+        scheme_steps: int = 1000,
+        n_success: int = 500,
+        p: int = 4,
+        verbose: bool = False,
+    ):
         # Length of the SAW
         self._scheme_steps = scheme_steps
         # Degree of the lattice (e.g p=4 corresponds to the square lattice Z^2)
@@ -92,19 +93,13 @@ class SAW_2D():
         Useful to initialize the pivot algorithm.
         """
         return np.stack(
-            (np.arange(self.scheme_steps), np.zeros(self.scheme_steps)),
-            axis=1
-            )
+            (np.arange(self.scheme_steps), np.zeros(self.scheme_steps)), axis=1
+        )
 
     @property
     @lru_cache(maxsize=None)
     def rotation_matrices(self) -> list:
-        thetas = 2 * np.pi * np.linspace(
-            1 / self.p,
-            1,
-            self.p - 1,
-            endpoint=False
-            )
+        thetas = 2 * np.pi * np.linspace(1 / self.p, 1, self.p - 1, endpoint=False)
         return [rotation_matrix_2d(theta) for theta in thetas]
 
     def simulate(self):
@@ -121,8 +116,8 @@ class SAW_2D():
                 # Choose which side to twist
                 side = np.random.rand() < 0.5
                 if side:
-                    old_walk = walk[0:pivot+1]
-                    temp_walk = walk[pivot+1:]
+                    old_walk = walk[0 : pivot + 1]
+                    temp_walk = walk[pivot + 1 :]
                 else:
                     old_walk = walk[pivot:]
                     temp_walk = walk[0:pivot]
@@ -130,13 +125,12 @@ class SAW_2D():
                 # Pick a symmetry operator
                 symtry_oprtr = self.rotation_matrices[
                     np.random.randint(len(self.rotation_matrices))
-                    ]
+                ]
                 # Apply the symmetry
-                new_walk = np.apply_along_axis(
-                    v_dot(symtry_oprtr),
-                    1,
-                    temp_walk - walk[pivot]
-                ) + walk[pivot]
+                new_walk = (
+                    np.apply_along_axis(v_dot(symtry_oprtr), 1, temp_walk - walk[pivot])
+                    + walk[pivot]
+                )
 
                 # Use cdist function of scipy package to calculate
                 # the pair-pair distance between old_chain and new_chain
@@ -155,6 +149,6 @@ class SAW_2D():
                         walk = np.concatenate((new_walk, old_walk), axis=0)
                     t += 1
                     pbar.update(1)
-        df = pd.DataFrame({'x': walk[:, 0], 'y': walk[:, 1]})
+        df = pd.DataFrame({"x": walk[:, 0], "y": walk[:, 1]})
         df.index = np.arange(1, self.scheme_steps + 1)
         return df

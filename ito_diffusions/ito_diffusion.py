@@ -12,16 +12,18 @@ class Ito_diffusion(abc.ABC):
     Typical example : barrier=0, barrier_condition='absorb'
     (only this one is supported for now)
     """
-    def __init__(self,
-                 x0: float = 0.0,
-                 T: float = 1.0,
-                 scheme_steps: int = 100,
-                 barrier: None = None,
-                 barrier_condition: None = None,
-                 noise_params: defaultdict = defaultdict(float),
-                 jump_params: defaultdict = defaultdict(float),
-                 verbose: bool = False,
-                 ) -> None:
+
+    def __init__(
+        self,
+        x0: float = 0.0,
+        T: float = 1.0,
+        scheme_steps: int = 100,
+        barrier: None = None,
+        barrier_condition: None = None,
+        noise_params: defaultdict = defaultdict(float),
+        jump_params: defaultdict = defaultdict(float),
+        verbose: bool = False,
+    ) -> None:
         self._x0 = x0
         self._T = T
         self._scheme_steps = scheme_steps
@@ -30,21 +32,21 @@ class Ito_diffusion(abc.ABC):
         self._noise_params = noise_params
         self._jump_params = jump_params
 
-        noise_type = self._noise_params['type']
+        noise_type = self._noise_params["type"]
         # if a Hurst index is specified but is equal to 0.5
         # then simply use the gaussian noise
-        H = self._noise_params.get('H', 0.5)
+        H = self._noise_params.get("H", 0.5)
         if not noise_type or H == 0.5:
-            noise_type = 'gaussian'
+            noise_type = "gaussian"
 
-        if noise_type == 'fgaussian':
+        if noise_type == "fgaussian":
             self._noise = Fractional_Gaussian_Noise(
                 T=self._T,
                 scheme_steps=self._scheme_steps,
-                H=self._noise_params['H'],
-                n_kl=self._noise_params.get('n_kl', 100),
-                method=self._noise_params.get('method', 'vector')
-               )
+                H=self._noise_params["H"],
+                n_kl=self._noise_params.get("n_kl", 100),
+                method=self._noise_params.get("method", "vector"),
+            )
         else:
             self._noise = None
 
@@ -76,14 +78,14 @@ class Ito_diffusion(abc.ABC):
         self._scheme_steps = new_scheme_steps
         # if a Hurst index is specified but is equal to 0.5
         # then simply use the gaussian noise
-        if self.noise_type == 'fgaussian':
+        if self.noise_type == "fgaussian":
             self._noise = Fractional_Gaussian_Noise(
                 T=self.T,
                 scheme_steps=new_scheme_steps,
-                H=self._noise_params['H'],
-                n_kl=self._noise_params.get('n_kl', 100),
-                method=self._noise_params.get('method', 'vector')
-               )
+                H=self._noise_params["H"],
+                n_kl=self._noise_params.get("n_kl", 100),
+                method=self._noise_params.get("method", "vector"),
+            )
 
     @property
     def barrier(self):
@@ -95,12 +97,10 @@ class Ito_diffusion(abc.ABC):
 
     @property
     def barrier_condition(self):
-        if self._barrier_condition not in [None, 'absorb']:
+        if self._barrier_condition not in [None, "absorb"]:
             raise NameError(
-                'Unsupported barrier condition : {}'.format(
-                    self._barrier_condition
-                    )
-                )
+                "Unsupported barrier condition : {}".format(self._barrier_condition)
+            )
         else:
             return self._barrier_condition
 
@@ -115,34 +115,34 @@ class Ito_diffusion(abc.ABC):
     @noise_params.setter
     def noise_params(self, new_noise_params) -> None:
         self._noise_params = new_noise_params
-        noise_type = self._noise_params['type']
+        noise_type = self._noise_params["type"]
         # if a Hurst index is specified but is equal to 0.5
         # then simply use the gaussian noise
-        H = self._noise_params.get('H', 0.5)
+        H = self._noise_params.get("H", 0.5)
         if not noise_type or H == 0.5:
-            noise_type = 'gaussian'
+            noise_type = "gaussian"
 
-        if noise_type == 'fgaussian':
+        if noise_type == "fgaussian":
             self._noise = Fractional_Gaussian_Noise(
                 T=self.T,
                 scheme_steps=self.scheme_steps,
-                H=self._noise_params['H'],
-                n_kl=self._noise_params.get('n_kl', 100),
-                method=self._noise_params.get('method', 'vector')
-               )
+                H=self._noise_params["H"],
+                n_kl=self._noise_params.get("n_kl", 100),
+                method=self._noise_params.get("method", "vector"),
+            )
         else:
             self._noise = None
 
     @property
     def noise_type(self) -> str:
-        noise_type = self.noise_params['type']
+        noise_type = self.noise_params["type"]
         # if a Hurst index is specified but is equal to 0.5
         # then simply use the gaussian noise
-        H = self.noise_params.get('H', 0.5)
+        H = self.noise_params.get("H", 0.5)
         if noise_type and H != 0.5:
             return noise_type
         else:
-            return 'gaussian'
+            return "gaussian"
 
     @property
     def noise(self):
@@ -170,19 +170,17 @@ class Ito_diffusion(abc.ABC):
 
     @property
     def jump_intensity_func(self):
-        """scipy.stats distribution
-        """
-        return self.jump_params['jump_intensity_func']
+        """scipy.stats distribution"""
+        return self.jump_params["jump_intensity_func"]
 
     @property
     def jump_size_distr(self):
-        """scipy.stats distribution
-        """
-        return self.jump_params['jump_size_distr']
+        """scipy.stats distribution"""
+        return self.jump_params["jump_size_distr"]
 
     @property
     def scheme_step(self) -> float:
-        return self.T/self.scheme_steps
+        return self.T / self.scheme_steps
 
     @property
     def scheme_step_sqrt(self) -> float:
@@ -193,11 +191,8 @@ class Ito_diffusion(abc.ABC):
         return np.linspace(0, self.T, self.scheme_steps + 1)
 
     def barrier_crossed(self, x, y, barrier) -> bool:
-        """barrier is crossed if x and y are on each side of the barrier
-        """
-        return (
-            (x <= barrier and y >= barrier) or (x >= barrier and y <= barrier)
-        )
+        """barrier is crossed if x and y are on each side of the barrier"""
+        return (x <= barrier and y >= barrier) or (x >= barrier and y <= barrier)
 
     @abc.abstractmethod
     def drift(self, t, x):
