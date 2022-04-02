@@ -33,12 +33,14 @@ class Fractional_Gaussian_Noise:
         scheme_steps: int = 100,
         method: str = "vector",
         n_kl: int = 100,
+        rng: np.random._generator.Generator = np.random.default_rng(),
     ) -> None:
         self._T = T
         self._scheme_steps = scheme_steps
         self._H = H
         self._method = method
         self._n_kl = n_kl
+        self._rng = rng
 
     @property
     def scheme_steps(self) -> int:
@@ -63,6 +65,14 @@ class Fractional_Gaussian_Noise:
     @T.setter
     def T(self, new_T) -> None:
         self._T = new_T
+
+    @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
 
     @property
     def H(self) -> float:
@@ -108,7 +118,7 @@ class Fractional_Gaussian_Noise:
 
     def simulate_vector_method(self) -> np.ndarray:
         """fBM samples are simulated as a correlated gaussian vector."""
-        cum_noise = rd.multivariate_normal(
+        cum_noise = self.rng.multivariate_normal(
             np.zeros((self.scheme_steps + 1,)), self.covariance_matrix()
         )
         return cum_noise[1:] - cum_noise[:-1]
@@ -156,9 +166,9 @@ class Fractional_Gaussian_Noise:
         if self.H <= 0.5:
             raise ValueError("H<=0.5 is not supported for KL method.")
         elif self.H > 0.5:
-            gauss_x = rd.randn(self.n_kl)
-            gauss_y = rd.randn(self.n_kl)
-            gauss_0 = rd.randn()
+            gauss_x = self.rng.normal(size=self.n_kl)
+            gauss_y = self.rng.normal(size=self.n_kl)
+            gauss_0 = self.rng.normal()
             # the below is memoized
             a = self.coeff_kl()
             for i, t in enumerate(self.time_steps):

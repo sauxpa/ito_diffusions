@@ -31,6 +31,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
         barrier_condition: np.ndarray = np.full(1, None),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
 
         x0 = np.array(x0)
@@ -41,6 +42,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
             barrier=barrier,
             barrier_condition=barrier_condition,
             jump_params=jump_params,
+            **kwargs,
         )
         self._keys = self._check_keys(keys)
         self._n_factors = n_factors
@@ -72,7 +74,7 @@ class Ito_diffusion_multi_d(Ito_diffusion):
             for i, t in enumerate(self.time_steps[1:]):
                 # z drawn for a N(0_d,1_d)
                 previous_step = last_step
-                z = rd.randn(self._n_factors)
+                z = self.rng.normal(size=self._n_factors)
                 inc = self.drift(t, last_step) * self.scheme_step + np.dot(
                     self.vol(t, last_step), self.scheme_step_sqrt * z
                 )
@@ -119,6 +121,7 @@ class BM_multi_d(Ito_diffusion_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         self._drift_vector = np.array(drift)
         # vol is actually a covariance matrix here
@@ -133,6 +136,7 @@ class BM_multi_d(Ito_diffusion_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @property
@@ -175,6 +179,7 @@ class GBM_multi_d(Ito_diffusion_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         self._drift_vector = np.array(drift)
         # vol is actually a covariance matrix here
@@ -189,6 +194,7 @@ class GBM_multi_d(Ito_diffusion_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @property
@@ -233,6 +239,7 @@ class Vasicek_multi_d(Ito_diffusion_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
 
         self._mean_reversion = np.array(mean_reversion)
@@ -249,6 +256,7 @@ class Vasicek_multi_d(Ito_diffusion_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @property
@@ -301,6 +309,7 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
 
         super().__init__(
@@ -314,6 +323,7 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @Vasicek_multi_d.long_term.setter
@@ -351,10 +361,11 @@ class SABR(Ito_diffusion_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
-        self._beta = np.float(beta)
-        self._vov = np.float(vov)
-        self._rho = np.float(rho)
+        self._beta = float(beta)
+        self._vov = float(vov)
+        self._rho = float(rho)
         n_factors = 2
         super().__init__(
             x0=x0,
@@ -365,6 +376,7 @@ class SABR(Ito_diffusion_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @property
@@ -433,12 +445,13 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
-        self._shift = np.float(shift)
-        self._K_max = np.float(K_max)
-        self._c = np.float(c)
-        self._vov = np.float(vov)
-        self._rho = np.float(rho)
+        self._shift = float(shift)
+        self._K_max = float(K_max)
+        self._c = float(c)
+        self._vov = float(vov)
+        self._rho = float(rho)
         n_factors = 2
         super().__init__(
             x0=x0,
@@ -449,6 +462,7 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @property
@@ -539,12 +553,13 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
-        self._shift = np.float(shift)
-        self._mode = np.float(mode)
-        self._beta = np.float(beta)
-        self._vov = np.float(vov)
-        self._rho = np.float(rho)
+        self._shift = float(shift)
+        self._mode = float(mode)
+        self._beta = float(beta)
+        self._vov = float(vov)
+        self._rho = float(rho)
         n_factors = 2
         super().__init__(
             x0=x0,
@@ -555,6 +570,7 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @property
@@ -650,11 +666,12 @@ class SABR_tanh(Ito_diffusion_multi_d):
         barrier: np.ndarray = np.full(1, None),
         barrier_condition: np.ndarray = np.full(1, None),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
-        self._shift = np.float(shift)
-        self._l = np.float(l)
-        self._vov = np.float(vov)
-        self._rho = np.float(rho)
+        self._shift = float(shift)
+        self._l = float(l)
+        self._vov = float(vov)
+        self._rho = float(rho)
         n_factors = 2
         super().__init__(
             x0=x0,
@@ -665,6 +682,7 @@ class SABR_tanh(Ito_diffusion_multi_d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
 
     @property

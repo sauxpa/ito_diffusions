@@ -21,7 +21,9 @@ class Ito_diffusion_1d(Ito_diffusion):
         barrier_condition: None = None,
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
+        rng: np.random._generator.Generator = np.random.default_rng(),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0=x0,
@@ -31,7 +33,9 @@ class Ito_diffusion_1d(Ito_diffusion):
             barrier_condition=barrier_condition,
             noise_params=noise_params,
             jump_params=jump_params,
+            rng=rng,
             verbose=verbose,
+            **kwargs,
         )
 
     def simulate(self) -> pd.DataFrame:
@@ -47,7 +51,7 @@ class Ito_diffusion_1d(Ito_diffusion):
             for i, t in enumerate(self.time_steps[1:]):
                 # for regular gaussian noise, generate them sequentially
                 if self.noise_type == "gaussian":
-                    z = self.scheme_step_sqrt * rd.randn()
+                    z = self.scheme_step_sqrt * self.rng.normal()
                 else:
                     z = noises[i]
 
@@ -59,7 +63,7 @@ class Ito_diffusion_1d(Ito_diffusion):
 
                 if self.has_jumps:
                     intensity = self.jump_intensity_func(t, previous_step)
-                    N = rd.poisson(intensity * self.scheme_step)
+                    N = self.rng.poisson(intensity * self.scheme_step)
                     last_step += N * self.jump_size_distr.rvs()
 
                 if (
@@ -95,6 +99,7 @@ class BM(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0=x0,
@@ -105,9 +110,10 @@ class BM(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._drift_double = np.float(drift)
-        self._vol_double = np.float(vol)
+        self._drift_double = float(drift)
+        self._vol_double = float(vol)
 
     @property
     def drift_double(self) -> float:
@@ -150,6 +156,7 @@ class GBM(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0,
@@ -160,9 +167,10 @@ class GBM(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._drift_double = np.float(drift)
-        self._vol_double = np.float(vol)
+        self._drift_double = float(drift)
+        self._vol_double = float(vol)
 
     @property
     def drift_double(self) -> float:
@@ -207,6 +215,7 @@ class Bessel(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0,
@@ -217,10 +226,11 @@ class Bessel(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
         self.check_d(d)
         self._d = d
-        self._vol_double = np.float(vol)
+        self._vol_double = float(vol)
 
     def check_d(self, d):
         if d == 1:
@@ -274,6 +284,7 @@ class BMPeriodic(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0=x0,
@@ -284,13 +295,14 @@ class BMPeriodic(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._drift_freq = np.float(drift_freq)
-        self._drift_phase = np.float(drift_phase)
-        self._drift_amp = np.float(drift_amp)
-        self._vol_freq = np.float(vol_freq)
-        self._vol_phase = np.float(vol_phase)
-        self._vol_amp = np.float(vol_amp)
+        self._drift_freq = float(drift_freq)
+        self._drift_phase = float(drift_phase)
+        self._drift_amp = float(drift_amp)
+        self._vol_freq = float(vol_freq)
+        self._vol_phase = float(vol_phase)
+        self._vol_amp = float(vol_amp)
 
     @property
     def drift_freq(self) -> float:
@@ -370,6 +382,7 @@ class SLN(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0,
@@ -380,6 +393,7 @@ class SLN(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
         self._drift_double = drift
         self._sigma = sigma
@@ -457,6 +471,7 @@ class Vasicek(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0,
@@ -467,10 +482,11 @@ class Vasicek(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._mean_reversion = np.float(mean_reversion)
-        self._long_term = np.float(long_term)
-        self._vol_double = np.float(vol)
+        self._mean_reversion = float(mean_reversion)
+        self._long_term = float(long_term)
+        self._vol_double = float(vol)
 
     @property
     def mean_reversion(self) -> float:
@@ -522,6 +538,7 @@ class CIR(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0,
@@ -532,10 +549,11 @@ class CIR(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._mean_reversion = np.float(mean_reversion)
-        self._long_term = np.float(long_term)
-        self._vol_double = np.float(vol)
+        self._mean_reversion = float(mean_reversion)
+        self._long_term = float(long_term)
+        self._vol_double = float(vol)
 
     @property
     def mean_reversion(self) -> float:
@@ -593,6 +611,7 @@ class BlackKarasinski(Vasicek):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             np.log(x0),
@@ -606,6 +625,7 @@ class BlackKarasinski(Vasicek):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
 
     @Vasicek.long_term.setter
@@ -640,6 +660,7 @@ class pseudo_GBM(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0,
@@ -649,9 +670,10 @@ class pseudo_GBM(Ito_diffusion_1d):
             barrier_condition=barrier_condition,
             noise_params=noise_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._drift_double = np.float(drift)
-        self._vol_double = np.float(vol)
+        self._drift_double = float(drift)
+        self._vol_double = float(vol)
 
     @property
     def drift_double(self) -> float:
@@ -689,7 +711,7 @@ class ContainedBM(Ito_diffusion_1d):
 
     def __init__(
         self,
-        x0: np.float = 0.5,
+        x0: float = 0.5,
         T: float = 1.0,
         scheme_steps: int = 100,
         beta: float = 1.0,
@@ -700,6 +722,7 @@ class ContainedBM(Ito_diffusion_1d):
         barrier: None = None,
         barrier_condition: None = None,
         verbose: bool = False,
+        **kwargs,
     ) -> None:
 
         super().__init__(
@@ -709,12 +732,13 @@ class ContainedBM(Ito_diffusion_1d):
             barrier=barrier,
             barrier_condition=barrier_condition,
             verbose=verbose,
+            **kwargs,
         )
-        self._beta = np.float(beta)
-        self._kappa = np.float(kappa)
-        self._sigma = np.float(sigma)
-        self._lo = np.float(lo)
-        self._hi = np.float(hi)
+        self._beta = float(beta)
+        self._kappa = float(kappa)
+        self._sigma = float(sigma)
+        self._lo = float(lo)
+        self._hi = float(hi)
 
     @property
     def kappa(self) -> float:
@@ -781,6 +805,7 @@ class Pinned_diffusion(Ito_diffusion_1d):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0=x0,
@@ -789,8 +814,9 @@ class Pinned_diffusion(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._pin = np.float(pin)
+        self._pin = float(pin)
 
     @property
     def pin(self) -> float:
@@ -847,6 +873,7 @@ class Alpha_pinned_BM(Pinned_diffusion):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0=x0,
@@ -856,9 +883,10 @@ class Alpha_pinned_BM(Pinned_diffusion):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._alpha = np.float(alpha)
-        self._vol_double = np.float(vol)
+        self._alpha = float(alpha)
+        self._vol_double = float(vol)
 
     @property
     def alpha(self) -> float:
@@ -903,6 +931,7 @@ class F_pinned_BM(Pinned_diffusion):
         noise_params: defaultdict = defaultdict(int),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         super().__init__(
             x0=x0,
@@ -912,6 +941,7 @@ class F_pinned_BM(Pinned_diffusion):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
         if not distr:
             raise NameError("Must specify a probability distribution")
@@ -951,6 +981,7 @@ class FBM(BM):
         barrier_condition: None = None,
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
 
         noise_params = {
@@ -969,6 +1000,7 @@ class FBM(BM):
             barrier_condition=barrier_condition,
             noise_params=noise_params,
             verbose=verbose,
+            **kwargs,
         )
 
     @property
@@ -1018,6 +1050,7 @@ class Levy(Ito_diffusion_1d):
         jump_intensity: float = 1.0,
         jump_size_distr: Union[float, Callable] = None,
         verbose: bool = False,
+        **kwargs,
     ) -> None:
 
         self._jump_intensity = jump_intensity
@@ -1036,9 +1069,10 @@ class Levy(Ito_diffusion_1d):
             noise_params=noise_params,
             jump_params=jump_params,
             verbose=verbose,
+            **kwargs,
         )
-        self._drift_double = np.float(drift)
-        self._vol_double = np.float(vol)
+        self._drift_double = float(drift)
+        self._vol_double = float(vol)
 
     @property
     def jump_intensity(self) -> float:
@@ -1107,13 +1141,16 @@ class Lognormal_multifractal:
         intermittency: float = 0.01,
         integral_scale: float = 1.0,
         l_param: None = None,
+        rng: np.random._generator.Generator = np.random.default_rng(),
         verbose: bool = False,
     ) -> None:
-        self._x0 = np.float(x0)
-        self._T = np.float(T)
-        self._scheme_step = np.float(scheme_step)
-        self._intermittency = np.float(intermittency)
-        self._integral_scale = np.float(integral_scale)
+        self._x0 = float(x0)
+        self._T = float(T)
+        self._scheme_step = float(scheme_step)
+        self._intermittency = float(intermittency)
+        self._integral_scale = float(integral_scale)
+
+        self._rng = rng
 
         if l_param is None:
             l_param = self._scheme_step / 128
@@ -1145,6 +1182,14 @@ class Lognormal_multifractal:
     def scheme_step(self, new_scheme_step) -> None:
         self.omega_simulate.cache_clear()
         self.scheme_step = new_scheme_step
+
+    @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
 
     @property
     def intermittency(self) -> float:
@@ -1219,7 +1264,7 @@ class Lognormal_multifractal:
 
     @lru_cache(maxsize=None)
     def omega_simulate(self) -> np.ndarray:
-        return rd.multivariate_normal(
+        return self.rng.multivariate_normal(
             self.expectation() * np.ones((self.scheme_steps,)), self.covariance_matrix()
         )
 
@@ -1240,7 +1285,7 @@ class Lognormal_multifractal:
         BM = [last_brownian]
         omega = self.omega_simulate()
         for om in omega:
-            noise = rd.randn() * self.l_sqrt
+            noise = self.rng.normal() * self.l_sqrt
             last_step += np.exp(om) * noise
             x.append(last_step)
             last_brownian += noise

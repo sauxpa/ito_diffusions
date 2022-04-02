@@ -43,6 +43,7 @@ class SAW_2D:
         n_success: int = 500,
         p: int = 4,
         verbose: bool = False,
+        rng: np.random._generator.Generator = np.random.default_rng(),
     ):
         # Length of the SAW
         self._scheme_steps = scheme_steps
@@ -53,6 +54,16 @@ class SAW_2D:
 
         # Switch tqdm on and off
         self._verbose = verbose
+
+        self._rng = rng
+
+    @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
 
     @property
     def scheme_steps(self) -> int:
@@ -112,9 +123,9 @@ class SAW_2D:
         with tqdm(total=self.n_success, disable=not self.verbose) as pbar:
             while t <= self.n_success:
                 # Pick a pivot uniformly on the walk (excluding the edges)
-                pivot = np.random.randint(1, self.scheme_steps - 1)
+                pivot = self.rng.integers(1, self.scheme_steps - 1)
                 # Choose which side to twist
-                side = np.random.rand() < 0.5
+                side = self.rng.random() < 0.5
                 if side:
                     old_walk = walk[0 : pivot + 1]
                     temp_walk = walk[pivot + 1 :]
@@ -124,7 +135,7 @@ class SAW_2D:
 
                 # Pick a symmetry operator
                 symtry_oprtr = self.rotation_matrices[
-                    np.random.randint(len(self.rotation_matrices))
+                    self.rng.integers(len(self.rotation_matrices))
                 ]
                 # Apply the symmetry
                 new_walk = (

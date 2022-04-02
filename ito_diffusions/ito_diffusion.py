@@ -22,7 +22,9 @@ class Ito_diffusion(abc.ABC):
         barrier_condition: None = None,
         noise_params: defaultdict = defaultdict(float),
         jump_params: defaultdict = defaultdict(float),
+        rng: np.random._generator.Generator = np.random.default_rng(),
         verbose: bool = False,
+        **kwargs,
     ) -> None:
         self._x0 = x0
         self._T = T
@@ -31,6 +33,7 @@ class Ito_diffusion(abc.ABC):
         self._barrier_condition = barrier_condition
         self._noise_params = noise_params
         self._jump_params = jump_params
+        self._rng = rng
 
         noise_type = self._noise_params["type"]
         # if a Hurst index is specified but is equal to 0.5
@@ -46,6 +49,7 @@ class Ito_diffusion(abc.ABC):
                 H=self._noise_params["H"],
                 n_kl=self._noise_params.get("n_kl", 100),
                 method=self._noise_params.get("method", "vector"),
+                rng=self.rng,
             )
         else:
             self._noise = None
@@ -85,7 +89,16 @@ class Ito_diffusion(abc.ABC):
                 H=self._noise_params["H"],
                 n_kl=self._noise_params.get("n_kl", 100),
                 method=self._noise_params.get("method", "vector"),
+                rng=self.rng,
             )
+
+    @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
 
     @property
     def barrier(self):
@@ -129,6 +142,7 @@ class Ito_diffusion(abc.ABC):
                 H=self._noise_params["H"],
                 n_kl=self._noise_params.get("n_kl", 100),
                 method=self._noise_params.get("method", "vector"),
+                rng=self.rng,
             )
         else:
             self._noise = None

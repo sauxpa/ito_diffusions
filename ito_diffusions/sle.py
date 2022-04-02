@@ -23,6 +23,7 @@ class FastChordalSLEHalfPlane:
         kappa: float = 0.0,
         T: float = 1.0,
         x0: complex = 0j,
+        rng: np.random._generator.Generator = np.random.default_rng(),
         verbose=False,
     ):
         self._scheme_steps = scheme_steps
@@ -30,6 +31,7 @@ class FastChordalSLEHalfPlane:
         self._T = T
         self._x0 = x0
         self._verbose = verbose
+        self._rng = rng
 
     @property
     def scheme_steps(self) -> int:
@@ -68,6 +70,14 @@ class FastChordalSLEHalfPlane:
         self._x0 = new_x0
 
     @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
+
+    @property
     def verbose(self) -> bool:
         return self._verbose
 
@@ -103,7 +113,7 @@ class FastChordalSLEHalfPlane:
         z = np.array([self.x0])
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i in range(1, self.scheme_steps + 1):
-                if np.random.rand() > 0.5:
+                if self.rng.random() > 0.5:
                     z = np.concatenate([[0.0], self._h(z, self.alpha_plus)])
                 else:
                     z = np.concatenate([[self.x0], self._h(z, self.alpha_minus)])

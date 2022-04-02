@@ -48,6 +48,7 @@ class Ito_diffusion_sheaf(Ito_diffusion):
         path_mixing: float = 0.99,
         barrier: None = None,
         barrier_condition: None = None,
+        **kwargs,
     ) -> None:
         Ito_diffusion.__init__(
             self,
@@ -56,9 +57,10 @@ class Ito_diffusion_sheaf(Ito_diffusion):
             scheme_steps=scheme_steps,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
         self._n_paths = n_paths
-        self._path_mixing = np.float(path_mixing)
+        self._path_mixing = float(path_mixing)
 
     @property
     def n_paths(self) -> int:
@@ -83,13 +85,13 @@ class Ito_diffusion_sheaf(Ito_diffusion):
     def simulate(self) -> pd.DataFrame:
         """Euler-Maruyama scheme"""
         paths = dict()
-        gaussian_inc = rd.randn(self.scheme_steps)
+        gaussian_inc = self.rng.normal(size=self.scheme_steps)
         for n in range(self.n_paths):
             last_step = self.x0
             x = np.empty(self.scheme_steps + 1)
             x[0] = last_step
             for i, t in enumerate(self.time_steps[1:]):
-                z = rd.randn() * self.path_noise_stddev
+                z = self.rng.normal() * self.path_noise_stddev
                 previous_step = last_step
                 last_step += self.drift(t, last_step) * self.scheme_step + self.vol(
                     t, last_step
@@ -128,6 +130,7 @@ class BM_sheaf(Ito_diffusion_sheaf, BM):
         vol: float = 1.0,
         barrier: None = None,
         barrier_condition: None = None,
+        **kwargs,
     ) -> None:
         Ito_diffusion_sheaf.__init__(
             self,
@@ -138,6 +141,7 @@ class BM_sheaf(Ito_diffusion_sheaf, BM):
             path_mixing=path_mixing,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
         BM.__init__(
             self,
@@ -169,6 +173,7 @@ class GBM_sheaf(Ito_diffusion_sheaf, GBM):
         vol: float = 1.0,
         barrier: None = None,
         barrier_condition: None = None,
+        **kwargs,
     ):
         Ito_diffusion_sheaf.__init__(
             self,
@@ -179,6 +184,7 @@ class GBM_sheaf(Ito_diffusion_sheaf, GBM):
             path_mixing=path_mixing,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
         GBM.__init__(
             self,
@@ -189,6 +195,7 @@ class GBM_sheaf(Ito_diffusion_sheaf, GBM):
             vol=vol,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
 
 
@@ -211,6 +218,7 @@ class Vasicek_sheaf(Ito_diffusion_sheaf, Vasicek):
         vol: float = 1.0,
         barrier: None = None,
         barrier_condition: None = None,
+        **kwargs,
     ) -> None:
         Ito_diffusion_sheaf.__init__(
             self,
@@ -221,6 +229,7 @@ class Vasicek_sheaf(Ito_diffusion_sheaf, Vasicek):
             path_mixing=path_mixing,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
         Vasicek.__init__(
             self,
@@ -232,6 +241,7 @@ class Vasicek_sheaf(Ito_diffusion_sheaf, Vasicek):
             vol=vol,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
 
 
@@ -254,6 +264,7 @@ class CIR_sheaf(Ito_diffusion_sheaf, CIR):
         vol: float = 1.0,
         barrier: None = None,
         barrier_condition: None = None,
+        **kwargs,
     ) -> None:
         Ito_diffusion_sheaf.__init__(
             self,
@@ -264,6 +275,7 @@ class CIR_sheaf(Ito_diffusion_sheaf, CIR):
             path_mixing=path_mixing,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
         CIR.__init__(
             self,
@@ -275,6 +287,7 @@ class CIR_sheaf(Ito_diffusion_sheaf, CIR):
             vol=vol,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
 
 
@@ -295,6 +308,7 @@ class pseudo_GBM_sheaf(Ito_diffusion_sheaf, pseudo_GBM):
         vol: float = 1.0,
         barrier: None = None,
         barrier_condition: None = None,
+        **kwargs,
     ) -> None:
         Ito_diffusion_sheaf.__init__(
             self,
@@ -305,6 +319,7 @@ class pseudo_GBM_sheaf(Ito_diffusion_sheaf, pseudo_GBM):
             path_mixing=path_mixing,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
         pseudo_GBM.__init__(
             self,
@@ -315,6 +330,7 @@ class pseudo_GBM_sheaf(Ito_diffusion_sheaf, pseudo_GBM):
             vol=vol,
             barrier=barrier,
             barrier_condition=barrier_condition,
+            **kwargs,
         )
 
 
@@ -333,12 +349,25 @@ class Pinned_diffusion_sheaf(Ito_diffusion_sheaf, Pinned_diffusion):
         path_mixing: float = 0.99,
         pin: float = 0.0,
         vol: float = 1.0,
+        **kwargs,
     ) -> None:
         Ito_diffusion_sheaf.__init__(
-            self, x0, T, scheme_steps, n_paths=n_paths, path_mixing=path_mixing
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            n_paths=n_paths,
+            path_mixing=path_mixing,
+            **kwargs,
         )
         Pinned_diffusion.__init__(
-            self, x0=x0, T=T, scheme_steps=scheme_steps, vol=vol, pin=pin
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            vol=vol,
+            pin=pin,
+            **kwargs,
         )
 
 
@@ -359,6 +388,7 @@ class Alpha_pinned_BM_sheaf(Pinned_diffusion_sheaf, Alpha_pinned_BM):
         alpha: float = 1.0,
         vol: float = 1.0,
         pin: float = 0.0,
+        **kwargs,
     ) -> None:
         Pinned_diffusion_sheaf.__init__(
             self,
@@ -368,9 +398,17 @@ class Alpha_pinned_BM_sheaf(Pinned_diffusion_sheaf, Alpha_pinned_BM):
             pin=pin,
             n_paths=n_paths,
             path_mixing=path_mixing,
+            **kwargs,
         )
         Alpha_pinned_BM.__init__(
-            self, x0=x0, T=T, scheme_steps=scheme_steps, alpha=alpha, vol=vol, pin=pin
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            alpha=alpha,
+            vol=vol,
+            pin=pin,
+            **kwargs,
         )
 
 
@@ -391,6 +429,7 @@ class F_pinned_BM_sheaf(Pinned_diffusion_sheaf, F_pinned_BM):
         path_mixing: float = 0.99,
         distr: None = None,
         pin: float = 0.0,
+        **kwargs,
     ) -> None:
         Pinned_diffusion_sheaf.__init__(
             self,
@@ -400,7 +439,14 @@ class F_pinned_BM_sheaf(Pinned_diffusion_sheaf, F_pinned_BM):
             pin=pin,
             n_paths=n_paths,
             path_mixing=path_mixing,
+            **kwargs,
         )
         F_pinned_BM.__init__(
-            self, x0=x0, T=T, scheme_steps=scheme_steps, distr=distr, pin=pin
+            self,
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            distr=distr,
+            pin=pin,
+            **kwargs,
         )

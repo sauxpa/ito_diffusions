@@ -51,7 +51,7 @@ class PDMP_1d(PDMP):
                 intensity = self.natural_jump_intensity_func(
                     t, previous_step, last_mode
                 )
-                if np.random.poisson(intensity * self.scheme_step) > 0:
+                if self.rng.poisson(intensity * self.scheme_step) > 0:
                     last_mode = int(
                         self.natural_jump_mode_func(t, previous_step, last_mode).rvs()
                     )

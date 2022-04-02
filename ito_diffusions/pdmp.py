@@ -19,6 +19,7 @@ class PDMP(abc.ABC):
         scheme_steps: int = 100,
         barrier_params: defaultdict = defaultdict(list),
         jump_params: defaultdict = defaultdict(list),
+        rng: np.random._generator.Generator = np.random.default_rng(),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -29,6 +30,8 @@ class PDMP(abc.ABC):
         self._scheme_steps = scheme_steps
         self._barrier_params = barrier_params
         self._jump_params = jump_params
+
+        self._rng = rng
 
         # Technical: numerical tolerance for barrier crossing
         self._barrier_tol = 1e-10
@@ -75,6 +78,14 @@ class PDMP(abc.ABC):
     @scheme_steps.setter
     def scheme_steps(self, new_scheme_steps) -> None:
         self._scheme_steps = new_scheme_steps
+
+    @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
 
     @property
     def barrier_params(self):
