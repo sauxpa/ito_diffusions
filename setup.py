@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setup(
     name='ito_diffusions',
     packages=['ito_diffusions'],
-    version='1.1.6',
+    version='1.2.0',
     author="Patrick Saux",
     author_email="patrick.jr.saux@gmail.com",
     description="Library for stochastic process simulation",
