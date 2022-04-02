@@ -974,7 +974,7 @@ class FBM(BM):
         scheme_steps: int = 100,
         drift: float = 0.0,
         vol: float = 1.0,
-        H: float = 0.5,
+        H: float = 0.51,
         method: str = "vector",
         n_kl: int = 100,
         barrier: None = None,
