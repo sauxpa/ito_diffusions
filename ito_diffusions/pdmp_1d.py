@@ -53,7 +53,7 @@ class PDMP_1d(PDMP):
                 )
                 if self.rng.poisson(intensity * self.scheme_step) > 0:
                     last_mode = int(
-                        self.natural_jump_mode_func(t, previous_step, last_mode).rvs()
+                        self.natural_jump_mode_func(t, previous_step, last_mode).rvs(random_state=self.rng)
                     )
                     natural_jump[i + 1] = True
 
@@ -62,7 +62,7 @@ class PDMP_1d(PDMP):
                         last_mode = int(
                             self.barrier_jump_mode_func[barrier_idx](
                                 t, previous_step, last_mode
-                            ).rvs()
+                            ).rvs(random_state=self.rng)
                         )
                         last_step = barrier
                         boundary_jump[i + 1] = True

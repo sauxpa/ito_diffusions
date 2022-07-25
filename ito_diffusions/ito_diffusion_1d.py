@@ -64,7 +64,7 @@ class Ito_diffusion_1d(Ito_diffusion):
                 if self.has_jumps:
                     intensity = self.jump_intensity_func(t, previous_step)
                     N = self.rng.poisson(intensity * self.scheme_step)
-                    last_step += N * self.jump_size_distr.rvs()
+                    last_step += N * self.jump_size_distr.rvs(random_state=self.rng)
 
                 if (
                     self.barrier_condition == "absorb"
