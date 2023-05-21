@@ -1,5 +1,6 @@
+# Author: Patrick Saux <patrick.saux@inria.fr>
+
 import numpy as np
-from numpy import random as rd
 import pandas as pd
 import abc
 from functools import lru_cache
@@ -120,16 +121,16 @@ class BM(Ito_diffusion_1d):
         return self._drift_double
 
     @drift_double.setter
-    def drift_double(self, new_drift) -> None:
-        self._drift_double = new_drift
+    def drift_double(self, new_drift: float) -> None:
+        self._drift_double = float(new_drift)
 
     @property
     def vol_double(self) -> float:
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     def drift(self, t, x) -> float:
         return self.drift_double
@@ -177,16 +178,16 @@ class GBM(Ito_diffusion_1d):
         return self._drift_double
 
     @drift_double.setter
-    def drift_double(self, new_drift) -> None:
-        self._drift_double = new_drift
+    def drift_double(self, new_drift: float) -> None:
+        self._drift_double = float(new_drift)
 
     @property
     def vol_double(self) -> float:
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     def drift(self, t, x) -> float:
         return self.drift_double * x
@@ -252,8 +253,8 @@ Using the BM class is more stable in this case."
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     def drift(self, t, x) -> float:
         return 0.5 * (self.d - 1) / x
@@ -395,7 +396,7 @@ class SLN(Ito_diffusion_1d):
             verbose=verbose,
             **kwargs,
         )
-        self._drift_double = drift
+        self._drift_double = float(drift)
         self._sigma = sigma
         self._shift = shift
         self._mixing = mixing
@@ -406,8 +407,8 @@ class SLN(Ito_diffusion_1d):
         return self._drift_double
 
     @drift_double.setter
-    def drift_double(self, new_drift) -> None:
-        self._drift_double = new_drift
+    def drift_double(self, new_drift: float) -> None:
+        self._drift_double = float(new_drift)
 
     @property
     def sigma(self) -> float:
@@ -509,8 +510,8 @@ class Vasicek(Ito_diffusion_1d):
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     def drift(self, t, x) -> float:
         return self.mean_reversion * (self.long_term - x)
@@ -576,8 +577,8 @@ class CIR(Ito_diffusion_1d):
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     @property
     def feller_condition(self) -> bool:
@@ -680,16 +681,16 @@ class pseudo_GBM(Ito_diffusion_1d):
         return self._drift_double
 
     @drift_double.setter
-    def drift_double(self, new_drift) -> None:
-        self._drift_double = new_drift
+    def drift_double(self, new_drift: float) -> None:
+        self._drift_double = float(new_drift)
 
     @property
     def vol_double(self) -> float:
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     def drift(self, t, x) -> float:
         return self.drift_double
@@ -901,8 +902,8 @@ class Alpha_pinned_BM(Pinned_diffusion):
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     def _h(self, t) -> float:
         if t == self.T:
@@ -1107,16 +1108,16 @@ class Levy(Ito_diffusion_1d):
         return self._drift_double
 
     @drift_double.setter
-    def drift_double(self, new_drift) -> None:
-        self._drift_double = new_drift
+    def drift_double(self, new_drift: float) -> None:
+        self._drift_double = float(new_drift)
 
     @property
     def vol_double(self) -> float:
         return self._vol_double
 
     @vol_double.setter
-    def vol_double(self, new_vol) -> None:
-        self._vol_double = new_vol
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
 
     def drift(self, t, x) -> float:
         return self.drift_double

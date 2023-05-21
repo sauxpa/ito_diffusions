@@ -1,9 +1,12 @@
+# Author: Patrick Saux <patrick.saux@inria.fr>
+
 import numpy as np
 from numpy import random as rd
 import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 from .ito_diffusion import Ito_diffusion
+from typing import List
 
 
 class Ito_diffusion_multi_d(Ito_diffusion):
@@ -22,13 +25,13 @@ class Ito_diffusion_multi_d(Ito_diffusion):
 
     def __init__(
         self,
-        x0: np.ndarray = np.zeros(1),
+        x0: List = np.zeros(1),
         T: float = 1.0,
         scheme_steps: int = 100,
         n_factors: int = 1,
         keys: None = None,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         jump_params: defaultdict = defaultdict(int),
         verbose: bool = False,
         **kwargs,
@@ -112,14 +115,14 @@ class BM_multi_d(Ito_diffusion_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.zeros(1),
+        x0: List = np.zeros(1),
         T: float = 1.0,
         scheme_steps: int = 100,
-        drift: np.ndarray = np.zeros(1),
-        vol: np.ndarray = np.eye(1),
+        drift: List = np.zeros(1),
+        vol: List = np.eye(1),
         keys: None = None,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -140,25 +143,25 @@ class BM_multi_d(Ito_diffusion_multi_d):
         )
 
     @property
-    def drift_vector(self) -> np.ndarray:
+    def drift_vector(self) -> List:
         return self._drift_vector
 
     @drift_vector.setter
-    def drift_vector(self, new_drift: np.ndarray) -> None:
+    def drift_vector(self, new_drift: List) -> None:
         self._drift_vector = np.array(new_drift)
 
     @property
-    def vol_matrix(self) -> np.ndarray:
+    def vol_matrix(self) -> List:
         return self._vol_matrix
 
     @vol_matrix.setter
-    def vol_matrix(self, new_vol: np.ndarray) -> None:
+    def vol_matrix(self, new_vol: List) -> None:
         self._vol_matrix = np.array(new_vol)
 
-    def drift(self, t, x) -> np.ndarray:
+    def drift(self, t, x) -> List:
         return self.drift_vector
 
-    def vol(self, t, x) -> np.ndarray:
+    def vol(self, t, x) -> List:
         return self.vol_matrix
 
 
@@ -170,14 +173,14 @@ class GBM_multi_d(Ito_diffusion_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.ones(1),
+        x0: List = np.ones(1),
         T: float = 1.0,
         scheme_steps: int = 100,
-        drift: np.ndarray = np.zeros(1),
-        vol: np.ndarray = np.eye(1),
+        drift: List = np.zeros(1),
+        vol: List = np.eye(1),
         keys: None = None,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -198,25 +201,25 @@ class GBM_multi_d(Ito_diffusion_multi_d):
         )
 
     @property
-    def drift_vector(self) -> np.ndarray:
+    def drift_vector(self) -> List:
         return self._drift_vector
 
     @drift_vector.setter
-    def drift_vector(self, new_drift: np.ndarray) -> np.ndarray:
+    def drift_vector(self, new_drift: List) -> List:
         self._drift_vector = np.array(new_drift)
 
     @property
-    def vol_matrix(self) -> np.ndarray:
+    def vol_matrix(self) -> List:
         return self._vol_matrix
 
     @vol_matrix.setter
-    def vol_matrix(self, new_vol: np.ndarray) -> None:
+    def vol_matrix(self, new_vol: List) -> None:
         self._vol_matrix = np.array(new_vol)
 
-    def drift(self, t, x: np.ndarray) -> np.ndarray:
+    def drift(self, t, x: List) -> List:
         return np.multiply(x, self.drift_vector)
 
-    def vol(self, t, x: np.ndarray) -> np.ndarray:
+    def vol(self, t, x: List) -> List:
         return np.multiply(x, self.vol_matrix.T).T
 
 
@@ -229,15 +232,15 @@ class Vasicek_multi_d(Ito_diffusion_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.ones(1),
+        x0: List = np.ones(1),
         T: float = 1.0,
         scheme_steps: int = 100,
-        mean_reversion: np.ndarray = np.zeros(1),
-        long_term: np.ndarray = np.zeros(1),
-        vol: np.ndarray = np.eye(1),
+        mean_reversion: List = np.zeros(1),
+        long_term: List = np.zeros(1),
+        vol: List = np.eye(1),
         keys: None = None,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -260,33 +263,33 @@ class Vasicek_multi_d(Ito_diffusion_multi_d):
         )
 
     @property
-    def mean_reversion(self) -> np.ndarray:
+    def mean_reversion(self) -> List:
         return self._mean_reversion
 
     @mean_reversion.setter
-    def mean_reversion(self, new_mean_reversion: np.ndarray) -> None:
+    def mean_reversion(self, new_mean_reversion: List) -> None:
         self._mean_reversion = new_mean_reversion
 
     @property
-    def long_term(self) -> np.ndarray:
+    def long_term(self) -> List:
         return self._long_term
 
     @long_term.setter
-    def long_term(self, new_long_term: np.ndarray) -> None:
+    def long_term(self, new_long_term: List) -> None:
         self._long_term = new_long_term
 
     @property
-    def vol_matrix(self) -> np.ndarray:
+    def vol_matrix(self) -> List:
         return self._vol_matrix
 
     @vol_matrix.setter
-    def vol_matrix(self, new_vol: np.ndarray) -> None:
+    def vol_matrix(self, new_vol: List) -> None:
         self._vol_matrix = np.array(new_vol)
 
-    def drift(self, t, x: np.ndarray) -> np.ndarray:
+    def drift(self, t, x: List) -> List:
         return np.multiply(self.long_term - x, self.mean_reversion)
 
-    def vol(self, t, x: np.ndarray) -> np.ndarray:
+    def vol(self, t, x: List) -> List:
         return self.vol_matrix
 
 
@@ -299,15 +302,15 @@ class BlackKarasinski_multi_d(Vasicek_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.ones(1),
+        x0: List = np.ones(1),
         T: float = 1.0,
         scheme_steps: int = 100,
-        mean_reversion: np.ndarray = np.zeros(1),
-        long_term: np.ndarray = np.ones(1),
-        vol: np.ndarray = np.eye(1),
+        mean_reversion: List = np.zeros(1),
+        long_term: List = np.ones(1),
+        vol: List = np.eye(1),
         keys: None = None,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -351,15 +354,15 @@ class SABR(Ito_diffusion_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.array([1.0, 1.0]),
+        x0: List = np.array([1.0, 1.0]),
         T: float = 1.0,
         scheme_steps: int = 100,
         keys: None = None,
         beta: float = 1.0,
         vov: float = 1.0,
         rho: float = 0.0,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -407,10 +410,10 @@ class SABR(Ito_diffusion_multi_d):
     def rho_dual(self) -> float:
         return np.sqrt(1 - self.rho**2)
 
-    def drift(self, t, x) -> np.ndarray:
+    def drift(self, t, x) -> List:
         return np.zeros_like(x)
 
-    def vol(self, t, x: np.ndarray) -> np.ndarray:
+    def vol(self, t, x: List) -> List:
         """Project dB onto dW and an orhtogonal white noise dZ
         dB_t = rho*dW_t + sqrt(1-rho^2)*dZ_t
         """
@@ -433,7 +436,7 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.array([1.0, 1.0]),
+        x0: List = np.array([1.0, 1.0]),
         T: float = 1.0,
         scheme_steps: int = 100,
         keys: None = None,
@@ -442,8 +445,8 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
         c: float = 1.0,
         vov: float = 1.0,
         rho: float = 0.0,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -509,10 +512,10 @@ class SABR_AS_lognorm(Ito_diffusion_multi_d):
     def rho_dual(self) -> float:
         return np.sqrt(1 - self.rho**2)
 
-    def drift(self, t, x: np.ndarray) -> np.ndarray:
+    def drift(self, t, x: List) -> List:
         return np.zeros_like(x)
 
-    def vol(self, t, x: np.ndarray) -> np.ndarray:
+    def vol(self, t, x: List) -> List:
         """Project dB onto dW and an orhtogonal white noise dZ
         dB_t = rho*dW_t + sqrt(1-rho^2)*dZ_t
         """
@@ -541,7 +544,7 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.array([1.0, 1.0]),
+        x0: List = np.array([1.0, 1.0]),
         T: float = 1.0,
         scheme_steps: int = 100,
         keys: None = None,
@@ -550,8 +553,8 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
         beta: float = 1.0,
         vov: float = 1.0,
         rho: float = 0.0,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -617,14 +620,14 @@ class SABR_AS_loglogistic(Ito_diffusion_multi_d):
     def rho_dual(self) -> float:
         return np.sqrt(1 - self.rho**2)
 
-    def drift(self, t, x: np.ndarray) -> np.ndarray:
+    def drift(self, t, x: List) -> List:
         return np.zeros_like(x)
 
     @property
     def alpha(self):
         return self.mode / (((self.beta - 1) / (self.beta + 1)) ** (1 - self.beta))
 
-    def vol(self, t, x: np.ndarray) -> np.ndarray:
+    def vol(self, t, x: List) -> List:
         """Project dB onto dW and an orhtogonal white noise dZ
         dB_t = rho*dW_t + sqrt(1-rho^2)*dZ_t
         """
@@ -655,7 +658,7 @@ class SABR_tanh(Ito_diffusion_multi_d):
 
     def __init__(
         self,
-        x0: np.ndarray = np.array([1.0, 1.0]),
+        x0: List = np.array([1.0, 1.0]),
         T: float = 1.0,
         scheme_steps: int = 100,
         keys: None = None,
@@ -663,8 +666,8 @@ class SABR_tanh(Ito_diffusion_multi_d):
         l: float = 1.0,
         vov: float = 1.0,
         rho: float = 0.0,
-        barrier: np.ndarray = np.full(1, None),
-        barrier_condition: np.ndarray = np.full(1, None),
+        barrier: List = np.full(1, None),
+        barrier_condition: List = np.full(1, None),
         verbose: bool = False,
         **kwargs,
     ) -> None:
@@ -690,7 +693,7 @@ class SABR_tanh(Ito_diffusion_multi_d):
         return self._shift
 
     @shift.setter
-    def shift(self, new_shift: np.ndarray) -> None:
+    def shift(self, new_shift: List) -> None:
         self._shift = float(new_shift)
 
     @property
@@ -721,10 +724,10 @@ class SABR_tanh(Ito_diffusion_multi_d):
     def rho_dual(self) -> float:
         return np.sqrt(1 - self.rho**2)
 
-    def drift(self, t, x: np.ndarray) -> np.ndarray:
+    def drift(self, t, x: List) -> List:
         return np.zeros_like(x)
 
-    def vol(self, t, x: np.ndarray) -> np.ndarray:
+    def vol(self, t, x: List) -> List:
         """Project dB onto dW and an orhtogonal white noise dZ
         dB_t = rho*dW_t + sqrt(1-rho^2)*dZ_t
         """

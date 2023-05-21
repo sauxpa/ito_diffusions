@@ -1,7 +1,10 @@
+# Author: Patrick Saux <patrick.saux@inria.fr>
+
 import numpy as np
 import abc
 from collections import defaultdict
 from .noise import Fractional_Gaussian_Noise
+from typing import List, Union
 
 
 class Ito_diffusion(abc.ABC):
@@ -15,7 +18,7 @@ class Ito_diffusion(abc.ABC):
 
     def __init__(
         self,
-        x0: float = 0.0,
+        x0: Union[float, List] = 0.0,
         T: float = 1.0,
         scheme_steps: int = 100,
         barrier: None = None,
@@ -58,12 +61,19 @@ class Ito_diffusion(abc.ABC):
         self._verbose = verbose
 
     @property
-    def x0(self) -> float:
+    def x0(self) -> Union[float, List]:
         return self._x0
 
     @x0.setter
-    def x0(self, new_x0: float) -> None:
+    def x0(self, new_x0: Union[float, List]) -> None:
         self._x0 = new_x0
+
+    @property
+    def len_x0(self) -> int:
+        if hasattr(self.x0, "__len__"):
+            return len(self.x0)
+        else:
+            return 1
 
     @property
     def T(self) -> float:
@@ -201,7 +211,7 @@ class Ito_diffusion(abc.ABC):
         return np.sqrt(self.scheme_step)
 
     @property
-    def time_steps(self) -> np.ndarray:
+    def time_steps(self) -> List:
         return np.linspace(0, self.T, self.scheme_steps + 1)
 
     def barrier_crossed(self, x, y, barrier) -> bool:
@@ -209,11 +219,11 @@ class Ito_diffusion(abc.ABC):
         return (x <= barrier and y >= barrier) or (x >= barrier and y <= barrier)
 
     @abc.abstractmethod
-    def drift(self, t, x):
+    def drift(self, t: float, x: Union[float, List]):
         pass
 
     @abc.abstractmethod
-    def vol(self, t, x):
+    def vol(self, t: float, x: Union[float, List]):
         pass
 
     @abc.abstractmethod

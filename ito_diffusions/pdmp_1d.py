@@ -1,3 +1,5 @@
+# Author: Patrick Saux <patrick.jr.saux@gmail.com>
+
 import numpy as np
 import pandas as pd
 from collections import defaultdict
@@ -53,7 +55,9 @@ class PDMP_1d(PDMP):
                 )
                 if self.rng.poisson(intensity * self.scheme_step) > 0:
                     last_mode = int(
-                        self.natural_jump_mode_func(t, previous_step, last_mode).rvs(random_state=self.rng)
+                        self.natural_jump_mode_func(t, previous_step, last_mode).rvs(
+                            random_state=self.rng
+                        )
                     )
                     natural_jump[i + 1] = True
 

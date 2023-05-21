@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-# coding: utf-8
+# Author: Patrick Saux <patrick.jr.saux@gmail.com>
 
 import numpy as np
-from numpy import random as rd
 from scipy.special import gamma, beta
 import mpmath as mp
 from functools import lru_cache

@@ -1,3 +1,5 @@
+# Author: Patrick Saux <patrick.jr.saux@gmail.com>
+
 import numpy as np
 import abc
 from collections import defaultdict
@@ -135,7 +137,7 @@ class PDMP(abc.ABC):
         return (self.T - self.t0) / self.scheme_steps
 
     @property
-    def time_steps(self) -> np.ndarray:
+    def time_steps(self) -> List:
         return np.linspace(self.t0, self.T, self.scheme_steps + 1)
 
     def barrier_crossed(self, x, y, barrier) -> bool:

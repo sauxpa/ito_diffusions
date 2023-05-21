@@ -1,3 +1,5 @@
+# Author: Patrick Saux <patrick.jr.saux@gmail.com>
+
 import numpy as np
 import pandas as pd
 from functools import lru_cache

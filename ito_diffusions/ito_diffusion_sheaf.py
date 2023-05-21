@@ -1,3 +1,5 @@
+# Author: Patrick Saux <patrick.saux@inria.fr>
+
 from .ito_diffusion import Ito_diffusion
 from .ito_diffusion_1d import (
     BM,
@@ -11,7 +13,6 @@ from .ito_diffusion_1d import (
 )
 
 import numpy as np
-from numpy import random as rd
 import pandas as pd
 
 # Diffusion sheaf
