@@ -20,7 +20,6 @@ class Time_series(Ito_diffusion):
         self,
         x0: List = [0.0],
         T: float = 100.0,
-        scheme_steps: int = -1,
         barrier: None = None,
         barrier_condition: None = None,
         noise_params: defaultdict = defaultdict(int),
@@ -29,14 +28,10 @@ class Time_series(Ito_diffusion):
         **kwargs,
     ) -> None:
 
-        # -1 encodes unit scheme step
-        if scheme_steps == -1:
-            scheme_steps = T
-
         super().__init__(
             x0=x0,
             T=T,
-            scheme_steps=scheme_steps,
+            scheme_steps=T,  # only allow integer time steps for time series 
             barrier=barrier,
             barrier_condition=barrier_condition,
             noise_params=noise_params,
@@ -76,9 +71,7 @@ class Time_series(Ito_diffusion):
                 # simulated in integrated, not differential form).
                 last_step = (
                     self.drift(t, x[: i + self.len_x0], z[: i + self.len_x0 + 1])
-                    * self.scheme_step
                     + self.vol(t, x[: i + self.len_x0], z[: i + self.len_x0 + 1])
-                    * self.scheme_step_sqrt
                 )
 
                 if (
@@ -106,7 +99,6 @@ class AR(Time_series):
         self,
         x0: List = [0.0],
         T: float = 100.0,
-        scheme_steps: int = -1,
         mu: float = 0.0,
         a: List[float] = [],
         vol: float = 1.0,
@@ -119,7 +111,6 @@ class AR(Time_series):
         super().__init__(
             x0=x0,
             T=T,
-            scheme_steps=scheme_steps,
             barrier=barrier,
             barrier_condition=barrier_condition,
             noise_params=noise_params,
@@ -175,7 +166,6 @@ class MA(Time_series):
         self,
         x0: List = [0.0],
         T: float = 100.0,
-        scheme_steps: int = -1,
         mu: float = 0.0,
         b: List[float] = [0.0],
         vol: float = 1.0,
@@ -188,7 +178,6 @@ class MA(Time_series):
         super().__init__(
             x0=x0,
             T=T,
-            scheme_steps=scheme_steps,
             barrier=barrier,
             barrier_condition=barrier_condition,
             noise_params=noise_params,
