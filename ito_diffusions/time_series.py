@@ -71,10 +71,13 @@ class Time_series(Ito_diffusion):
 
                 previous_step = last_step
 
+                # Naming is borrowed from diffusion models
+                # (note the difference with Ito_diffusion: the process is
+                # simulated in integrated, not differential form).
                 last_step = (
-                    self.drift(t, x[: i + self.len_x0], z[: i + self.len_x0])
+                    self.drift(t, x[: i + self.len_x0], z[: i + self.len_x0 + 1])
                     * self.scheme_step
-                    + self.vol(t, x[: i + self.len_x0], z[: i + self.len_x0])
+                    + self.vol(t, x[: i + self.len_x0], z[: i + self.len_x0 + 1])
                     * self.scheme_step_sqrt
                 )
 
@@ -95,8 +98,8 @@ class Time_series(Ito_diffusion):
 
 class AR(Time_series):
     """Instantiate Time_series to simulate an autoregressive model AR(p)
-    X_t = a_0 + sum_{i=1}^p a_i * X_{t-i} + vol * Z_t
-    where (a_i)_{i=0}^p are real numbers.
+    X_t = mu + sum_{i=1}^p a_i * X_{t-i} + vol * Z_t
+    where mu and (a_i)_{i=1}^p are real numbers.
     """
 
     def __init__(
@@ -104,7 +107,8 @@ class AR(Time_series):
         x0: List = [0.0],
         T: float = 100.0,
         scheme_steps: int = -1,
-        a: List[float] = [0.0],
+        mu: float = 0.0,
+        a: List[float] = [],
         vol: float = 1.0,
         barrier: None = None,
         barrier_condition: None = None,
@@ -122,8 +126,17 @@ class AR(Time_series):
             verbose=verbose,
             **kwargs,
         )
+        self._mu = float(mu)
         self._a = np.array(a)
         self._vol_double = float(vol)
+
+    @property
+    def mu(self) -> float:
+        return self._mu
+
+    @mu.setter
+    def mu(self, new_mu: float) -> None:
+        self._mu = float(new_mu)
 
     @property
     def a(self) -> List[float]:
@@ -135,7 +148,7 @@ class AR(Time_series):
 
     @property
     def p(self) -> int:
-        return len(self.a) - 1
+        return len(self.a)
 
     @property
     def vol_double(self) -> float:
@@ -146,7 +159,76 @@ class AR(Time_series):
         self._vol_double = float(new_vol)
 
     def drift(self, t, x, z) -> float:
-        return self.a[0] + self.a[1:] @ x[-1 : -self.p - 1 : -1]
+        return self.mu + self.a @ x[-1 : -self.p - 1 : -1]
+
+    def vol(self, t, x, z) -> float:
+        return self.vol_double * z[-1]
+
+
+class MA(Time_series):
+    """Instantiate Time_series to simulate an moving-average model MA(q)
+    X_t = mu + vol * Z_t sum_{i=1}^q b_i * Z_{t-i}
+    where mu and (b_i)_{i=1}^p are real numbers.
+    """
+
+    def __init__(
+        self,
+        x0: List = [0.0],
+        T: float = 100.0,
+        scheme_steps: int = -1,
+        mu: float = 0.0,
+        b: List[float] = [0.0],
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+        noise_params: defaultdict = defaultdict(int),
+        verbose: bool = False,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            x0=x0,
+            T=T,
+            scheme_steps=scheme_steps,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            noise_params=noise_params,
+            verbose=verbose,
+            **kwargs,
+        )
+        self._mu = float(mu)
+        self._b = np.array(b)
+        self._vol_double = float(vol)
+
+    @property
+    def mu(self) -> float:
+        return self._mu
+
+    @mu.setter
+    def mu(self, new_mu: float) -> None:
+        self._mu = float(new_mu)
+
+    @property
+    def b(self) -> List[float]:
+        return self._b
+
+    @b.setter
+    def b(self, new_b: List[float]) -> None:
+        self._b = np.array(new_b)
+
+    @property
+    def q(self) -> int:
+        return len(self.b)
+
+    @property
+    def vol_double(self) -> float:
+        return self._vol_double
+
+    @vol_double.setter
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
+
+    def drift(self, t, x, z) -> float:
+        return self.mu + self.vol_double * self.b @ z[-2 : -self.q - 2 : -1]
 
     def vol(self, t, x, z) -> float:
         return self.vol_double * z[-1]
