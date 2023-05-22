@@ -20,6 +20,7 @@ class Time_series_1d(Ito_diffusion):
         self,
         x0: List = [0.0],
         T: float = 100.0,
+        max_lag: int = -1,
         barrier: None = None,
         barrier_condition: None = None,
         noise_params: defaultdict = defaultdict(int),
@@ -40,6 +41,10 @@ class Time_series_1d(Ito_diffusion):
             **kwargs,
         )
 
+        # To avoid unnecessary passing of large arrays, when simulating only
+        # pass the last max_lag entries (or the whole array if max_lag == -1).
+        self._max_lag = max_lag
+
     @abc.abstractmethod
     def drift(self, t: float, x: List[float], z: List[float]):
         pass
@@ -58,6 +63,8 @@ class Time_series_1d(Ito_diffusion):
         # Noise process
         z = np.zeros(self.scheme_steps + 1)
 
+        max_lag = np.maximum(self.max_lag, 0)
+
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i, t in enumerate(self.time_steps[self.len_x0 :]):
                 if self.noise_type == "gaussian":
@@ -71,8 +78,16 @@ class Time_series_1d(Ito_diffusion):
                 # (note the difference with Ito_diffusion: the process is
                 # simulated in integrated, not differential form).
                 last_step = (
-                    self.drift(t, x[: i + self.len_x0], z[: i + self.len_x0 + 1])
-                    + self.vol(t, x[: i + self.len_x0], z[: i + self.len_x0 + 1])
+                    self.drift(
+                        t,
+                        x[i + self.len_x0 - max_lag: i + self.len_x0],
+                        z[i + self.len_x0 - max_lag: i + self.len_x0 + 1],
+                    )
+                    + self.vol(
+                        t,
+                        x[i + self.len_x0 - max_lag: i + self.len_x0],
+                        z[i + self.len_x0 - max_lag: i + self.len_x0 + 1],
+                    )
                     * last_noise
                 )
 
@@ -144,6 +159,10 @@ class AR(Time_series_1d):
         return len(self.a)
 
     @property
+    def max_lag(self) -> int:
+        return self.p
+
+    @property
     def vol_double(self) -> float:
         return self._vol_double
 
@@ -209,6 +228,10 @@ class MA(Time_series_1d):
     @property
     def q(self) -> int:
         return len(self.b)
+
+    @property
+    def max_lag(self) -> int:
+        return self.q
 
     @property
     def vol_double(self) -> float:
@@ -295,6 +318,10 @@ class ARMA(Time_series_1d):
         return len(self.b)
 
     @property
+    def max_lag(self) -> int:
+        return np.maximum(self.p, self.q)
+
+    @property
     def vol_double(self) -> float:
         return self._vol_double
 
@@ -324,6 +351,7 @@ class Time_series_CH(Ito_diffusion):
         x0: List = [0.0],
         sigma0: List = [1.0],
         T: float = 100.0,
+        max_lag: int = -1,
         barrier: None = None,
         barrier_condition: None = None,
         noise_params: defaultdict = defaultdict(int),
@@ -343,6 +371,10 @@ class Time_series_CH(Ito_diffusion):
             verbose=verbose,
             **kwargs,
         )
+
+        # To avoid unnecessary passing of large arrays, when simulating only
+        # pass the last max_lag entries (or the whole array if max_lag == -1).
+        self._max_lag = max_lag
 
         self.sigma0 = sigma0
 
@@ -380,6 +412,8 @@ class Time_series_CH(Ito_diffusion):
         # Noise process
         z = np.zeros(self.scheme_steps + 1)
 
+        max_lag = np.maximum(self.max_lag, 0)
+
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i, t in enumerate(self.time_steps[self.len_x0 :]):
                 if self.noise_type == "gaussian":
@@ -394,16 +428,16 @@ class Time_series_CH(Ito_diffusion):
                 # simulated in integrated, not differential form).
                 last_sigma = self.vol(
                     t,
-                    x[: i + self.len_x0],
-                    sigma[: i + self.len_x0],
-                    z[: i + self.len_x0 + 1],
+                    x[i + self.len_x0 - max_lag : i + self.len_x0],
+                    sigma[i + self.len_x0 - max_lag : i + self.len_x0],
+                    z[i + self.len_x0 - max_lag : i + self.len_x0 + 1],
                 )
                 last_step = (
                     self.drift(
                         t,
-                        x[: i + self.len_x0],
-                        sigma[: i + self.len_x0],
-                        z[: i + self.len_x0 + 1],
+                        x[i + self.len_x0 - max_lag : i + self.len_x0],
+                        sigma[i + self.len_x0 - max_lag : i + self.len_x0],
+                        z[i + self.len_x0 - max_lag : i + self.len_x0 + 1],
                     )
                     + last_sigma * last_noise
                 )
@@ -425,8 +459,9 @@ class Time_series_CH(Ito_diffusion):
 
 
 class ARCH(Time_series_CH):
-    """Instantiate Time_series to simulate an autoregressive model ARCH(p)
-    X_t = sigma_t Z_t and sigma^2_t = v + sum_{i=1}^p a_i * X^2_{t-j}
+    """Instantiate Time_series to simulate an autoregressive conditional
+    heteroskedasticity model ARCH(p)
+    X_t = sigma_t Z_t and sigma^2_t = v + sum_{i=1}^p a_i * X^2_{t-i}
     where v > 0 and (a_i)_{i=1}^p are real numbers.
     """
 
@@ -481,6 +516,10 @@ class ARCH(Time_series_CH):
         return len(self.a)
 
     @property
+    def max_lag(self) -> int:
+        return self.p
+
+    @property
     def drift_double(self) -> float:
         return self._drift_double
 
@@ -502,4 +541,107 @@ class ARCH(Time_series_CH):
     def vol(self, t, x, sigma, z) -> float:
         return self.vol_double * np.sqrt(
             self.v + self.a @ x[-1 : -self.p - 1 : -1] ** 2
+        )
+
+
+class GARCH(Time_series_CH):
+    """Instantiate Time_series to simulate a generalized autoregressive
+    conditional heteroskedasticity model ARCH(p)
+    X_t = sigma_t Z_t and
+    sigma^2_t = v + sum_{i=1}^p a_i * X^2_{t-i} + sum_{j=1}^q b_j sigma^2_{t-j}
+    where v > 0 and (a_i)_{i=1}^p are real numbers.
+    """
+
+    def __init__(
+        self,
+        x0: List = [0.0],
+        sigma0: List = [1.0],
+        T: float = 100.0,
+        v: float = 1.0,
+        a: List[float] = [],
+        b: List[float] = [],
+        drift: float = 0.0,
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+        noise_params: defaultdict = defaultdict(int),
+        verbose: bool = False,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            x0=x0,
+            sigma0=sigma0,
+            T=T,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            noise_params=noise_params,
+            verbose=verbose,
+            **kwargs,
+        )
+        self._v = float(v)
+        self._a = np.array(a)
+        self._b = np.array(b)
+        self._drift_double = float(drift)
+        self._vol_double = float(vol)
+
+    @property
+    def v(self) -> float:
+        return self._v
+
+    @v.setter
+    def v(self, new_v: float) -> None:
+        self._v = float(new_v)
+
+    @property
+    def a(self) -> List[float]:
+        return self._a
+
+    @a.setter
+    def a(self, new_a: List[float]) -> None:
+        self._a = np.array(new_a)
+
+    @property
+    def p(self) -> int:
+        return len(self.a)
+
+    @property
+    def b(self) -> List[float]:
+        return self._b
+
+    @b.setter
+    def b(self, new_b: List[float]) -> None:
+        self._b = np.array(new_b)
+
+    @property
+    def q(self) -> int:
+        return len(self.b)
+
+    @property
+    def max_lag(self) -> int:
+        return np.maximum(self.p, self.q)
+
+    @property
+    def drift_double(self) -> float:
+        return self._drift_double
+
+    @drift_double.setter
+    def drift_double(self, new_drift: float) -> None:
+        self._drift_double = float(new_drift)
+
+    @property
+    def vol_double(self) -> float:
+        return self._vol_double
+
+    @vol_double.setter
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
+
+    def drift(self, t, x, sigma, z) -> float:
+        return self.drift_double
+
+    def vol(self, t, x, sigma, z) -> float:
+        return self.vol_double * np.sqrt(
+            self.v
+            + self.a @ x[-1 : -self.p - 1 : -1] ** 2
+            + self.b @ sigma[-1 : -self.q - 1 : -1]
         )
