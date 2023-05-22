@@ -3,7 +3,7 @@
 import numpy as np
 import abc
 from collections import defaultdict
-from .noise import Fractional_Gaussian_Noise
+from .noise import Fractional_Gaussian_Noise, Gaussian_Noise, Student_Noise
 from typing import List, Union
 
 
@@ -40,12 +40,9 @@ class Ito_diffusion(abc.ABC):
 
         noise_type = self._noise_params["type"]
         # if a Hurst index is specified but is equal to 0.5
-        # then simply use the gaussian noise
+        # then simply use a gaussian noise
         H = self._noise_params.get("H", 0.5)
-        if not noise_type or H == 0.5:
-            noise_type = "gaussian"
-
-        if noise_type == "fgaussian":
+        if noise_type == "fgaussian" and H != 0.5:
             self._noise = Fractional_Gaussian_Noise(
                 T=self._T,
                 scheme_steps=self._scheme_steps,
@@ -54,8 +51,10 @@ class Ito_diffusion(abc.ABC):
                 method=self._noise_params.get("method", "vector"),
                 rng=self.rng,
             )
+        elif noise_type == "student":
+            self._noise = Student_Noise(df=self._noise_params.get("df"), rng=self.rng)
         else:
-            self._noise = None
+            self._noise = Gaussian_Noise(rng=self.rng)
 
         # For tqdm
         self._verbose = verbose
@@ -142,10 +141,7 @@ class Ito_diffusion(abc.ABC):
         # if a Hurst index is specified but is equal to 0.5
         # then simply use the gaussian noise
         H = self._noise_params.get("H", 0.5)
-        if not noise_type or H == 0.5:
-            noise_type = "gaussian"
-
-        if noise_type == "fgaussian":
+        if noise_type == "fgaussian" and H != 0.5:
             self._noise = Fractional_Gaussian_Noise(
                 T=self.T,
                 scheme_steps=self.scheme_steps,
@@ -154,8 +150,10 @@ class Ito_diffusion(abc.ABC):
                 method=self._noise_params.get("method", "vector"),
                 rng=self.rng,
             )
+        elif noise_type == "student":
+            self._noise = Student_Noise(df=self._noise_params.get("df"), rng=self.rng)
         else:
-            self._noise = None
+            self._noise = Gaussian_Noise(rng=self.rng)
 
     @property
     def noise_type(self) -> str:
@@ -163,8 +161,10 @@ class Ito_diffusion(abc.ABC):
         # if a Hurst index is specified but is equal to 0.5
         # then simply use the gaussian noise
         H = self.noise_params.get("H", 0.5)
-        if noise_type and H != 0.5:
+        if noise_type == "fgaussian" and H != 0.5:
             return noise_type
+        elif noise_type == "student":
+            return "student"
         else:
             return "gaussian"
 

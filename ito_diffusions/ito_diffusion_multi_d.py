@@ -75,9 +75,9 @@ class Ito_diffusion_multi_d(Ito_diffusion):
 
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i, t in enumerate(self.time_steps[1:]):
-                # z drawn for a N(0_d,1_d)
                 previous_step = last_step
-                z = self.rng.normal(size=self._n_factors)
+                # Draw multivariate noise (Gaussian N(0, I_d) by default)
+                z = self.noise.simulate(size=self._n_factors)
                 inc = self.drift(t, last_step) * self.scheme_step + np.dot(
                     self.vol(t, last_step), self.scheme_step_sqrt * z
                 )

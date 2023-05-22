@@ -45,16 +45,17 @@ class Ito_diffusion_1d(Ito_diffusion):
         x = np.empty(self.scheme_steps + 1)
         x[0] = last_step
 
+        # For fractional gaussian noise, generate them all at once
+        # (because of the correlation structure).
         if self.noise_type == "fgaussian":
             noises = self.noise.simulate()
 
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i, t in enumerate(self.time_steps[1:]):
-                # for regular gaussian noise, generate them sequentially
-                if self.noise_type == "gaussian":
-                    z = self.scheme_step_sqrt * self.rng.normal()
-                else:
+                if self.noise_type == "fgaussian":
                     z = noises[i]
+                else:
+                    z = self.scheme_step_sqrt * self.noise.simulate()
 
                 previous_step = last_step
                 last_step += (

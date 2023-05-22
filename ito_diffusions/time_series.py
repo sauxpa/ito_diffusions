@@ -68,8 +68,7 @@ class Time_series_1d(Ito_diffusion):
 
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i, t in enumerate(self.time_steps[self.len_x0 :]):
-                if self.noise_type == "gaussian":
-                    last_noise = self.rng.normal()
+                last_noise = self.noise.simulate()
 
                 z[i + self.len_x0] = last_noise
 
@@ -417,8 +416,7 @@ class Time_series_CH(Ito_diffusion):
 
         with tqdm(total=self.scheme_steps, disable=not self.verbose) as pbar:
             for i, t in enumerate(self.time_steps[self.len_x0 :]):
-                if self.noise_type == "gaussian":
-                    last_noise = self.rng.normal()
+                last_noise = self.noise.simulate()
 
                 z[i + self.len_x0] = last_noise
 

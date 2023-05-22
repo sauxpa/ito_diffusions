@@ -4,26 +4,87 @@ import numpy as np
 from scipy.special import gamma, beta
 import mpmath as mp
 from functools import lru_cache
+from typing import List, Union
+import logging
 
-#  Fractional Gaussian noise
-#
-# Covariance function of fractional Brownian motion :
-#
-# E[B_H(t) B_H (s)]=1/2*(|t|^{2H}+|s|^{2H}-|t-s|^{2H})
-#
-# 2 implementations :
-#    * Slow implementation where the full trajectory of the fBM is generated
-# as a correlated gaussian draw (requires manipulation of
-# scheme_steps*scheme_steps matrix).
-#    * Faster KL-like expansion method
-# (https://projecteuclid.org/download/pdf_1/euclid.ejp/1464816842)
-# -- only works for H>0.5, other methods exist
-# (e.g https://arxiv.org/pdf/1810.11850.pdf) but are more complicated
-# to make numerically robust.
-#
+
+class Gaussian_Noise:
+    def __init__(
+        self,
+        rng: np.random._generator.Generator = np.random.default_rng(),
+    ) -> None:
+        self._rng = rng
+
+    @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
+
+    def simulate(self, size: int = None) -> Union[float, List[float]]:
+        if size:
+            return self.rng.normal(size=size)
+        else:
+            return self.rng.normal()
+
+
+class Student_Noise:
+    def __init__(
+        self,
+        df: float = 4.0,
+        rng: np.random._generator.Generator = np.random.default_rng(),
+    ) -> None:
+        self.df = df
+        self._rng = rng
+
+    @property
+    def rng(self):
+        return self._rng
+
+    @rng.setter
+    def rng(self, new_rng):
+        self._rng = new_rng
+
+    @property
+    def df(self) -> float:
+        return self._df
+
+    @df.setter
+    def df(self, new_df: float) -> None:
+        if new_df <= 2:
+            msg = "Student distribution with degree of freedom {} (<= 2) does not have finite variance.".format(
+                new_df
+            )
+            logging.warning(msg)
+        self._df = new_df
+
+    def simulate(self, size: int = None) -> Union[float, List[float]]:
+        if size:
+            return np.sqrt((self.df - 2) / self.df) * self.rng.standard_t(self.df, size=size)
+        else:
+            return np.sqrt((self.df - 2) / self.df) * self.rng.standard_t(self.df)
 
 
 class Fractional_Gaussian_Noise:
+    """Fractional Gaussian noise
+
+    Covariance function of fractional Brownian motion :
+
+    E[B_H(t) B_H (s)]=1/2*(|t|^{2H}+|s|^{2H}-|t-s|^{2H})
+
+    2 implementations :
+        * Slow implementation where the full trajectory of the fBM is generated
+            as a correlated gaussian draw (requires manipulation of
+            scheme_steps*scheme_steps matrix).
+        * Faster KL-like expansion method
+        (https://projecteuclid.org/download/pdf_1/euclid.ejp/1464816842)
+        -- only works for H>0.5, other methods exist
+        (e.g https://arxiv.org/pdf/1810.11850.pdf) but are more complicated
+        to make numerically robust.
+    """
+
     def __init__(
         self,
         H: float = 0.5,
@@ -105,7 +166,7 @@ class Fractional_Gaussian_Noise:
             t ** (2 * self.H) + s ** (2 * self.H) - np.abs(t - s) ** (2 * self.H)
         )
 
-    def covariance_matrix(self) -> np.ndarray:
+    def covariance_matrix(self) -> List[float]:
         cov = np.zeros((self.scheme_steps + 1, self.scheme_steps + 1))
         for i in range(self.scheme_steps + 1):
             cov[i][i] = (i * self.scheme_step) ** (2 * self.H)
@@ -114,7 +175,7 @@ class Fractional_Gaussian_Noise:
                 cov[j][i] = cov[i][j]
         return cov
 
-    def simulate_vector_method(self) -> np.ndarray:
+    def simulate_vector_method(self) -> List[float]:
         """fBM samples are simulated as a correlated gaussian vector."""
         cum_noise = self.rng.multivariate_normal(
             np.zeros((self.scheme_steps + 1,)), self.covariance_matrix()
@@ -155,7 +216,7 @@ class Fractional_Gaussian_Noise:
             )
         return a
 
-    def simulate_kl_method(self) -> np.ndarray:
+    def simulate_kl_method(self) -> List[float]:
         """fBM samples are simulated using a Karhunen-Loeve expansion
         (see https://projecteuclid.org/download/pdf_1/euclid.ejp/1464816842).
         """
@@ -175,12 +236,10 @@ class Fractional_Gaussian_Noise:
                 sy = np.multiply(np.sin(i_range), gauss_y)
                 s = a[0] * t / self.T * gauss_0 + np.dot(a[1:], sx + sy)
                 cum_noise[i] = s
-        # cast to numpy and rescale
-        # cum_noise = np.array(cum_noise) * self.T ** self.H
         cum_noise = cum_noise * self.T**self.H
         return cum_noise[1:] - cum_noise[:-1]
 
-    def simulate(self) -> np.ndarray:
+    def simulate(self) -> List[float]:
         """Returns increments of the fBM."""
         if self.method == "vector":
             return self.simulate_vector_method()
