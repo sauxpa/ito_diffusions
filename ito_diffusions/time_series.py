@@ -6,6 +6,7 @@ import abc
 from collections import defaultdict
 from typing import List
 from tqdm import tqdm
+import logging
 from .ito_diffusion import Ito_diffusion
 
 
@@ -80,13 +81,13 @@ class Time_series_1d(Ito_diffusion):
                 last_step = (
                     self.drift(
                         t,
-                        x[i + self.len_x0 - max_lag: i + self.len_x0],
-                        z[i + self.len_x0 - max_lag: i + self.len_x0 + 1],
+                        x[i + self.len_x0 - max_lag : i + self.len_x0],
+                        z[i + self.len_x0 - max_lag : i + self.len_x0 + 1],
                     )
                     + self.vol(
                         t,
-                        x[i + self.len_x0 - max_lag: i + self.len_x0],
-                        z[i + self.len_x0 - max_lag: i + self.len_x0 + 1],
+                        x[i + self.len_x0 - max_lag : i + self.len_x0],
+                        z[i + self.len_x0 - max_lag : i + self.len_x0 + 1],
                     )
                     * last_noise
                 )
@@ -459,7 +460,7 @@ class Time_series_CH(Ito_diffusion):
 
 
 class ARCH(Time_series_CH):
-    """Instantiate Time_series to simulate an autoregressive conditional
+    """Instantiate Time_series_CH to simulate an autoregressive conditional
     heteroskedasticity model ARCH(p)
     X_t = sigma_t Z_t and sigma^2_t = v + sum_{i=1}^p a_i * X^2_{t-i}
     where v > 0 and (a_i)_{i=1}^p are real numbers.
@@ -545,11 +546,11 @@ class ARCH(Time_series_CH):
 
 
 class GARCH(Time_series_CH):
-    """Instantiate Time_series to simulate a generalized autoregressive
+    """Instantiate Time_series_CH to simulate a generalized autoregressive
     conditional heteroskedasticity model ARCH(p)
     X_t = sigma_t Z_t and
     sigma^2_t = v + sum_{i=1}^p a_i * X^2_{t-i} + sum_{j=1}^q b_j sigma^2_{t-j}
-    where v > 0 and (a_i)_{i=1}^p are real numbers.
+    where v > 0, (a_i)_{i=1}^p and (b_j)_{j=1}^q are real numbers.
     """
 
     def __init__(
@@ -643,5 +644,128 @@ class GARCH(Time_series_CH):
         return self.vol_double * np.sqrt(
             self.v
             + self.a @ x[-1 : -self.p - 1 : -1] ** 2
-            + self.b @ sigma[-1 : -self.q - 1 : -1]
+            + self.b @ sigma[-1 : -self.q - 1 : -1] ** 2
+        )
+
+
+class NAGARCH(Time_series_CH):
+    """Instantiate Time_series_CH to simulate a nonlinear asymmetric
+    generalized autoregressive conditional heteroskedasticity model ARCH(p)
+    X_t = sigma_t Z_t and
+    sigma^2_t = v + a * (X_{t-1} - theta * sigma_{t-1})^2 + b sigma^2_{t-1}
+    where v > 0, a, b and theta are real numbers.
+    """
+
+    def __init__(
+        self,
+        x0: List = [0.0],
+        sigma0: List = [1.0],
+        T: float = 100.0,
+        v: float = 1.0,
+        a: float = 0.0,
+        b: float = 0.0,
+        theta: float = 0.0,
+        drift: float = 0.0,
+        vol: float = 1.0,
+        barrier: None = None,
+        barrier_condition: None = None,
+        noise_params: defaultdict = defaultdict(int),
+        verbose: bool = False,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            x0=x0,
+            sigma0=sigma0,
+            T=T,
+            barrier=barrier,
+            barrier_condition=barrier_condition,
+            noise_params=noise_params,
+            verbose=verbose,
+            **kwargs,
+        )
+        self._v = float(v)
+        self._a = float(a)
+        self._b = float(b)
+        self._theta = float(theta)
+        self._drift_double = float(drift)
+        self._vol_double = float(vol)
+
+        self.check_params(self.a, self.b, self.theta)
+
+    def check_params(self, a, b, theta):
+        if a * (1 + theta**2) + b >= 1:
+            msg = "Process may fail to be stationary or nonnegative (a * (1 + theta ** 2) + b >= 1)."
+            logging.warning(msg)
+
+    @property
+    def v(self) -> float:
+        return self._v
+
+    @v.setter
+    def v(self, new_v: float) -> None:
+        self._v = float(new_v)
+
+    @property
+    def a(self) -> float:
+        return self._a
+
+    @a.setter
+    def a(self, new_a: float) -> None:
+        self._a = float(new_a)
+        self.check_params(self.a, self.b, self.theta)
+
+    @property
+    def theta(self) -> float:
+        return self._theta
+
+    @theta.setter
+    def theta(self, new_theta: float) -> None:
+        self._theta = float(new_theta)
+        self.check_params(self.a, self.b, self.theta)
+
+    @property
+    def p(self) -> int:
+        return 1
+
+    @property
+    def b(self) -> float:
+        return self._b
+
+    @b.setter
+    def b(self, new_b: float) -> None:
+        self._b = float(new_b)
+        self.check_params(self.a, self.b, self.theta)
+
+    @property
+    def q(self) -> int:
+        return 1
+
+    @property
+    def max_lag(self) -> int:
+        return 1
+
+    @property
+    def drift_double(self) -> float:
+        return self._drift_double
+
+    @drift_double.setter
+    def drift_double(self, new_drift: float) -> None:
+        self._drift_double = float(new_drift)
+
+    @property
+    def vol_double(self) -> float:
+        return self._vol_double
+
+    @vol_double.setter
+    def vol_double(self, new_vol: float) -> None:
+        self._vol_double = float(new_vol)
+
+    def drift(self, t, x, sigma, z) -> float:
+        return self.drift_double
+
+    def vol(self, t, x, sigma, z) -> float:
+        return self.vol_double * np.sqrt(
+            self.v
+            + self.a * (x[-1] - self.theta * sigma[-1]) ** 2
+            + self.b * sigma[-1] ** 2
         )
